@@ -284,6 +284,16 @@ export default function SettingsScreen() {
         {/* About Section */}
         {renderSection(t('settings.about') || 'About', (
           <>
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={() => router.push('/auth-demo')}
+            >
+              <ThemedText style={[styles.menuText, { color: colors.text }]}>
+                🧪 Test Authentication
+              </ThemedText>
+              <IconSymbol name="chevron.right" size={16} color={gray[400]} />
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.menuItem}>
               <ThemedText style={[styles.menuText, { color: colors.text }]}>
                 {t('settings.help') || 'Help & Support'}
