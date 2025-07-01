@@ -126,11 +126,22 @@ export default function AddItemScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color={colors.text} />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, { backgroundColor: gray[100] }]}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="chevron.left" size={20} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={[styles.title, { color: colors.text }]}>{t('action.add_item')}</ThemedText>
-        <View style={styles.placeholder} />
+        <TouchableOpacity 
+          style={[styles.cancelButton, { backgroundColor: gray[100] }]}
+          onPress={() => router.back()}
+        >
+          <ThemedText style={[styles.cancelText, { color: colors.text }]}>
+            {t('action.cancel')}
+          </ThemedText>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchSection}>
@@ -192,14 +203,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
-  placeholder: {
-    width: 32,
+  cancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  cancelText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   searchSection: {
     padding: 20,

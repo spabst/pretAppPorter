@@ -92,14 +92,21 @@ export default function CustomItemScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color={colors.text} />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, { backgroundColor: gray[100] }]}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="chevron.left" size={20} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={[styles.title, { color: colors.text }]}>
           {params.prefilledTitle ? t('action.add_item') : t('form.custom_item')}
         </ThemedText>
-        <TouchableOpacity onPress={handleSave}>
-          <ThemedText style={[styles.saveButton, { color: colors.primary }]}>{t('action.save')}</ThemedText>
+        <TouchableOpacity 
+          onPress={handleSave}
+          style={[styles.saveButtonContainer, { backgroundColor: colors.primary }]}
+        >
+          <ThemedText style={[styles.saveButton, { color: 'white' }]}>{t('action.save')}</ThemedText>
         </TouchableOpacity>
       </View>
 
@@ -224,7 +231,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
@@ -232,8 +243,13 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
+  saveButtonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
   saveButton: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   content: {
