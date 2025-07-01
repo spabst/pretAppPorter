@@ -27,6 +27,7 @@ export const en = {
   'form.description': 'Description',
   'form.category': 'Category',
   'form.condition': 'Condition',
+  'form.custom_item': 'I can\'t find my item',
   
   // Condition states
   'condition.new': 'New',

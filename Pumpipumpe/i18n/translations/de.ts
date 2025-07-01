@@ -27,6 +27,7 @@ export const de = {
   'form.description': 'Beschreibung',
   'form.category': 'Kategorie',
   'form.condition': 'Zustand',
+  'form.custom_item': 'Ich finde meinen Gegenstand nicht',
   
   // Condition states
   'condition.new': 'Neu',

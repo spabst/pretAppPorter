@@ -624,7 +624,7 @@ export interface LocalizedItem {
   tags: string[];
 }
 
-export const getLocalizedItems = (language: 'it' | 'fr' = 'it'): LocalizedItem[] => {
+export const getLocalizedItems = (language: 'it' | 'fr' | 'en' | 'de' | 'es' = 'it'): LocalizedItem[] => {
   return predefinedItems.map(item => ({
     id: item.id,
     title: language === 'fr' ? (item.titleFr || item.title) : item.title,
@@ -635,11 +635,11 @@ export const getLocalizedItems = (language: 'it' | 'fr' = 'it'): LocalizedItem[]
   }));
 };
 
-export const getItemsByCategory = (category: ItemCategory, language: 'it' | 'fr' = 'it'): LocalizedItem[] => {
+export const getItemsByCategory = (category: ItemCategory, language: 'it' | 'fr' | 'en' | 'de' | 'es' = 'it'): LocalizedItem[] => {
   return getLocalizedItems(language).filter(item => item.category === category);
 };
 
-export const searchPredefinedItems = (query: string, language: 'it' | 'fr' = 'it'): LocalizedItem[] => {
+export const searchPredefinedItems = (query: string, language: 'it' | 'fr' | 'en' | 'de' | 'es' = 'it'): LocalizedItem[] => {
   const searchTerm = query.toLowerCase();
   const items = getLocalizedItems(language);
   
