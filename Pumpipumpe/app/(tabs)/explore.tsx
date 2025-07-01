@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, View, Alert, Modal, TextInput, ScrollView, SafeAreaView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -17,6 +18,7 @@ export default function MyItemsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
+  const insets = useSafeAreaInsets();
 
   // Form state
   const [title, setTitle] = useState('');
@@ -153,7 +155,7 @@ export default function MyItemsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <ThemedText style={[styles.title, { color: colors.text }]}>I Miei Oggetti</ThemedText>
         <TouchableOpacity onPress={openAddModal} style={[styles.addButton, { backgroundColor: colors.primary }]}>
@@ -285,7 +287,7 @@ export default function MyItemsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 

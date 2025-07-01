@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, TextInput, View, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
+import { StyleSheet, FlatList, TextInput, View, Alert, TouchableOpacity, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -30,6 +31,7 @@ export default function BrowseScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   
   const getCategoryTranslation = (category: ItemCategory) => {
     const translations = {
@@ -152,7 +154,7 @@ export default function BrowseScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <ThemedText style={[styles.title, { color: colors.text }]}>{t('action.search')}</ThemedText>
         <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -186,7 +188,7 @@ export default function BrowseScreen() {
           contentContainerStyle={styles.scrollContent}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
