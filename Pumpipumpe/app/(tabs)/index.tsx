@@ -3,10 +3,12 @@ import { StyleSheet, FlatList, TextInput, View, Alert, TouchableOpacity, SafeAre
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { LanguageSelector } from '@/components/LanguageSelector';
 import { mockApi } from '@/services/mockApi';
 import { Item, ItemCategory } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const categoryIcons = {
   [ItemCategory.TOOLS]: 'hammer.fill',
@@ -20,18 +22,6 @@ const categoryIcons = {
   [ItemCategory.OTHER]: 'ellipsis'
 };
 
-const categoryTranslations = {
-  [ItemCategory.TOOLS]: 'Attrezzi',
-  [ItemCategory.ELECTRONICS]: 'Elettronica',
-  [ItemCategory.BOOKS]: 'Libri',
-  [ItemCategory.KITCHEN]: 'Cucina',
-  [ItemCategory.GARDEN]: 'Giardino',
-  [ItemCategory.SPORTS]: 'Sport',
-  [ItemCategory.HOUSEHOLD]: 'Casa',
-  [ItemCategory.AUTOMOTIVE]: 'Auto',
-  [ItemCategory.OTHER]: 'Altro'
-};
-
 export default function BrowseScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,6 +30,22 @@ export default function BrowseScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
+  const { t } = useLanguage();
+  
+  const getCategoryTranslation = (category: ItemCategory) => {
+    const translations = {
+      [ItemCategory.TOOLS]: t('category.tools'),
+      [ItemCategory.ELECTRONICS]: t('category.electronics'),
+      [ItemCategory.BOOKS]: t('category.books'),
+      [ItemCategory.KITCHEN]: t('category.kitchen'),
+      [ItemCategory.GARDEN]: t('category.garden'),
+      [ItemCategory.SPORTS]: t('category.sports'),
+      [ItemCategory.HOUSEHOLD]: t('category.household'),
+      [ItemCategory.AUTOMOTIVE]: t('category.automotive'),
+      [ItemCategory.OTHER]: t('category.other')
+    };
+    return translations[category];
+  };
 
   useEffect(() => {
     loadItems();
@@ -51,7 +57,7 @@ export default function BrowseScreen() {
       const data = await mockApi.getItems();
       setItems(data);
     } catch {
-      Alert.alert('Error', 'Failed to load items');
+      Alert.alert(t('error.generic'), 'Failed to load items');
     } finally {
       setLoading(false);
     }
@@ -63,7 +69,7 @@ export default function BrowseScreen() {
       const data = await mockApi.searchItems(query);
       setItems(data);
     } catch {
-      Alert.alert('Error', 'Search failed');
+      Alert.alert(t('error.generic'), 'Search failed');
     } finally {
       setLoading(false);
     }
@@ -76,7 +82,7 @@ export default function BrowseScreen() {
       const data = await mockApi.getItems({ category });
       setItems(data);
     } catch {
-      Alert.alert('Error', 'Failed to filter items');
+      Alert.alert(t('error.generic'), 'Failed to filter items');
     } finally {
       setLoading(false);
     }
@@ -89,7 +95,7 @@ export default function BrowseScreen() {
 
   const renderCategoryGrid = () => (
     <View style={styles.categorySection}>
-      <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Categorie</ThemedText>
+      <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>{t('nav.explore')}</ThemedText>
       <View style={styles.categoryGrid}>
         {Object.values(ItemCategory).slice(0, 4).map((category) => (
           <TouchableOpacity
@@ -105,7 +111,7 @@ export default function BrowseScreen() {
               />
             </View>
             <ThemedText style={[styles.categoryLabel, { color: colors.text }]}>
-              {categoryTranslations[category]}
+              {getCategoryTranslation(category)}
             </ThemedText>
           </TouchableOpacity>
         ))}
@@ -117,11 +123,11 @@ export default function BrowseScreen() {
     <View style={styles.itemsSection}>
       <View style={styles.itemsHeader}>
         <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-          {selectedCategory ? `Oggetti - ${categoryTranslations[selectedCategory]}` : 'Oggetti Disponibili'}
+          {selectedCategory ? `${t('nav.explore')} - ${getCategoryTranslation(selectedCategory)}` : t('nav.explore')}
         </ThemedText>
         {selectedCategory && (
           <TouchableOpacity onPress={resetFilter}>
-            <ThemedText style={[styles.clearFilter, { color: colors.primary }]}>Tutti</ThemedText>
+            <ThemedText style={[styles.clearFilter, { color: colors.primary }]}>{t('filter.all_categories')}</ThemedText>
           </TouchableOpacity>
         )}
       </View>
@@ -135,7 +141,7 @@ export default function BrowseScreen() {
             <View style={styles.itemMeta}>
               <View style={[styles.statusBadge, item.isAvailable ? styles.availableBadge : styles.unavailableBadge]}>
                 <ThemedText style={[styles.statusText, { color: item.isAvailable ? '#22C55E' : '#EF4444' }]}>
-                  {item.isAvailable ? 'Disponibile' : 'Non disponibile'}
+                  {item.isAvailable ? t('items.available') : t('items.not_available')}
                 </ThemedText>
               </View>
             </View>
@@ -149,12 +155,13 @@ export default function BrowseScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <ThemedText style={[styles.title, { color: colors.text }]}>Cerca Oggetti</ThemedText>
+        <ThemedText style={[styles.title, { color: colors.text }]}>{t('action.search')}</ThemedText>
+        <LanguageSelector style={styles.languageSelector} />
         <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <IconSymbol name="magnifyingglass" size={20} color={gray[400]} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Cerca oggetto"
+            placeholder={t('search.placeholder')}
             placeholderTextColor={gray[400]}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -166,7 +173,7 @@ export default function BrowseScreen() {
 
       {loading ? (
         <View style={styles.centered}>
-          <ThemedText style={{ color: colors.text }}>Caricamento...</ThemedText>
+          <ThemedText style={{ color: colors.text }}>{t('loading')}</ThemedText>
         </View>
       ) : (
         <FlatList
@@ -198,6 +205,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700',
+    marginBottom: 16,
+  },
+  languageSelector: {
     marginBottom: 16,
   },
   searchContainer: {
