@@ -7,32 +7,41 @@ import { mockApi } from '@/services/mockApi';
 import { ItemCategory, ItemCondition } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useLanguage } from '@/contexts/LanguageContextV2';
 
-const categoryTranslations = {
-  [ItemCategory.TOOLS]: 'Attrezzi',
-  [ItemCategory.ELECTRONICS]: 'Elettronica',
-  [ItemCategory.BOOKS]: 'Libri',
-  [ItemCategory.KITCHEN]: 'Cucina',
-  [ItemCategory.GARDEN]: 'Giardino',
-  [ItemCategory.SPORTS]: 'Sport',
-  [ItemCategory.HOUSEHOLD]: 'Casa',
-  [ItemCategory.AUTOMOTIVE]: 'Auto',
-  [ItemCategory.OTHER]: 'Altro'
-};
-
-const conditionTranslations = {
-  [ItemCondition.NEW]: 'Nuovo',
-  [ItemCondition.LIKE_NEW]: 'Come Nuovo',
-  [ItemCondition.GOOD]: 'Buone',
-  [ItemCondition.FAIR]: 'Discrete',
-  [ItemCondition.POOR]: 'Scarse'
-};
 
 export default function CustomItemScreen() {
   const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
+  const { t } = useLanguage();
+
+  const getCategoryTranslation = (category: ItemCategory) => {
+    const translations = {
+      [ItemCategory.TOOLS]: t('category.tools'),
+      [ItemCategory.ELECTRONICS]: t('category.electronics'),
+      [ItemCategory.BOOKS]: t('category.books'),
+      [ItemCategory.KITCHEN]: t('category.kitchen'),
+      [ItemCategory.GARDEN]: t('category.garden'),
+      [ItemCategory.SPORTS]: t('category.sports'),
+      [ItemCategory.HOUSEHOLD]: t('category.household'),
+      [ItemCategory.AUTOMOTIVE]: t('category.automotive'),
+      [ItemCategory.OTHER]: t('category.other')
+    };
+    return translations[category];
+  };
+
+  const getConditionTranslation = (condition: ItemCondition) => {
+    const translations = {
+      [ItemCondition.NEW]: t('condition.new'),
+      [ItemCondition.LIKE_NEW]: t('condition.like_new'),
+      [ItemCondition.GOOD]: t('condition.good'),
+      [ItemCondition.FAIR]: t('condition.fair'),
+      [ItemCondition.POOR]: t('condition.poor')
+    };
+    return translations[condition];
+  };
 
   // Form state
   const [title, setTitle] = useState('');
@@ -56,7 +65,7 @@ export default function CustomItemScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Errore', 'Inserisci un titolo per il tuo oggetto');
+      Alert.alert(t('error.generic'), 'Inserisci un titolo per il tuo oggetto');
       return;
     }
 
@@ -72,31 +81,38 @@ export default function CustomItemScreen() {
       };
 
       await mockApi.createItem(itemData);
-      Alert.alert('Successo', 'Oggetto aggiunto con successo!', [
+      Alert.alert('Successo', t('success.item_added'), [
         { text: 'OK', onPress: () => router.dismiss() }
       ]);
     } catch {
-      Alert.alert('Errore', 'Impossibile salvare l\'oggetto');
+      Alert.alert(t('error.generic'), 'Impossibile salvare l\'oggetto');
     }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color={colors.text} />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, { backgroundColor: gray[100] }]}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="chevron.left" size={20} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={[styles.title, { color: colors.text }]}>
-          {params.prefilledTitle ? 'Conferma Oggetto' : 'Oggetto Personalizzato'}
+          {params.prefilledTitle ? t('action.add_item') : t('form.custom_item')}
         </ThemedText>
-        <TouchableOpacity onPress={handleSave}>
-          <ThemedText style={[styles.saveButton, { color: colors.primary }]}>Salva</ThemedText>
+        <TouchableOpacity 
+          onPress={handleSave}
+          style={[styles.saveButtonContainer, { backgroundColor: colors.primary }]}
+        >
+          <ThemedText style={[styles.saveButton, { color: 'white' }]}>{t('action.save')}</ThemedText>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Titolo *</ThemedText>
+          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.title')} *</ThemedText>
           <TextInput
             style={[styles.textInput, { 
               backgroundColor: colors.card, 
@@ -105,13 +121,13 @@ export default function CustomItemScreen() {
             }]}
             value={title}
             onChangeText={setTitle}
-            placeholder="Nome dell'oggetto"
+            placeholder={t('form.title')}
             placeholderTextColor={gray[400]}
           />
         </View>
 
         <View style={styles.section}>
-          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Descrizione</ThemedText>
+          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.description')}</ThemedText>
           <TextInput
             style={[styles.textInput, styles.textArea, { 
               backgroundColor: colors.card, 
@@ -120,7 +136,7 @@ export default function CustomItemScreen() {
             }]}
             value={description}
             onChangeText={setDescription}
-            placeholder="Descrivi il tuo oggetto, le sue caratteristiche e condizioni d'uso..."
+            placeholder={t('form.description')}
             placeholderTextColor={gray[400]}
             multiline
             numberOfLines={4}
@@ -128,7 +144,7 @@ export default function CustomItemScreen() {
         </View>
 
         <View style={styles.section}>
-          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Categoria</ThemedText>
+          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.category')}</ThemedText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
             {Object.values(ItemCategory).map((cat) => (
               <TouchableOpacity
@@ -145,7 +161,7 @@ export default function CustomItemScreen() {
                   { color: colors.text },
                   category === cat && { color: 'white' }
                 ]}>
-                  {categoryTranslations[cat]}
+                  {getCategoryTranslation(cat)}
                 </ThemedText>
               </TouchableOpacity>
             ))}
@@ -153,7 +169,7 @@ export default function CustomItemScreen() {
         </View>
 
         <View style={styles.section}>
-          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Condizioni</ThemedText>
+          <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.condition')}</ThemedText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
             {Object.values(ItemCondition).map((cond) => (
               <TouchableOpacity
@@ -170,7 +186,7 @@ export default function CustomItemScreen() {
                   { color: colors.text },
                   condition === cond && { color: 'white' }
                 ]}>
-                  {conditionTranslations[cond]}
+                  {getConditionTranslation(cond)}
                 </ThemedText>
               </TouchableOpacity>
             ))}
@@ -184,7 +200,7 @@ export default function CustomItemScreen() {
           >
             <View>
               <ThemedText style={[styles.toggleTitle, { color: colors.text }]}>
-                Disponibile per il prestito
+                {t('items.available')}
               </ThemedText>
               <ThemedText style={[styles.toggleDescription, { color: gray[500] }]}>
                 I vicini potranno richiedere questo oggetto
@@ -215,7 +231,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
@@ -223,8 +243,13 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
+  saveButtonContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
   saveButton: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   content: {

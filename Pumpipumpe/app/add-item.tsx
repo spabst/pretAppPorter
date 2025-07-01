@@ -3,52 +3,58 @@ import { StyleSheet, FlatList, TextInput, TouchableOpacity, View, SafeAreaView }
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { predefinedItems, searchPredefinedItems, PredefinedItem } from '@/data/predefinedItems';
+import { getPredefinedItems, searchPredefinedItems, LocalizedPredefinedItem } from '@/data/predefinedItems/index';
 import { ItemCategory } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useLanguage } from '@/contexts/LanguageContextV2';
 
-const categoryTranslations = {
-  [ItemCategory.TOOLS]: 'Attrezzi',
-  [ItemCategory.ELECTRONICS]: 'Elettronica',
-  [ItemCategory.BOOKS]: 'Libri',
-  [ItemCategory.KITCHEN]: 'Cucina',
-  [ItemCategory.GARDEN]: 'Giardino',
-  [ItemCategory.SPORTS]: 'Sport',
-  [ItemCategory.HOUSEHOLD]: 'Casa',
-  [ItemCategory.AUTOMOTIVE]: 'Auto',
-  [ItemCategory.OTHER]: 'Altro'
-};
 
 export default function AddItemScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredItems, setFilteredItems] = useState<PredefinedItem[]>(predefinedItems);
+  const [filteredItems, setFilteredItems] = useState<LocalizedPredefinedItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
+  const { language, t } = useLanguage();
+
+  const getCategoryTranslation = (category: ItemCategory) => {
+    const translations = {
+      [ItemCategory.TOOLS]: t('category.tools'),
+      [ItemCategory.ELECTRONICS]: t('category.electronics'),
+      [ItemCategory.BOOKS]: t('category.books'),
+      [ItemCategory.KITCHEN]: t('category.kitchen'),
+      [ItemCategory.GARDEN]: t('category.garden'),
+      [ItemCategory.SPORTS]: t('category.sports'),
+      [ItemCategory.HOUSEHOLD]: t('category.household'),
+      [ItemCategory.AUTOMOTIVE]: t('category.automotive'),
+      [ItemCategory.OTHER]: t('category.other')
+    };
+    return translations[category];
+  };
 
   const filterItems = React.useCallback(() => {
-    let items = predefinedItems;
+    let items = getPredefinedItems(language);
 
     if (selectedCategory) {
       items = items.filter(item => item.category === selectedCategory);
     }
 
     if (searchQuery.trim()) {
-      items = searchPredefinedItems(searchQuery).filter(item => 
+      items = searchPredefinedItems(searchQuery, language).filter(item => 
         !selectedCategory || item.category === selectedCategory
       );
     }
 
     setFilteredItems(items);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, language]);
 
   useEffect(() => {
     filterItems();
   }, [filterItems]);
 
-  const handleItemSelect = (item: PredefinedItem) => {
+  const handleItemSelect = (item: LocalizedPredefinedItem) => {
     // Navigate to custom form with pre-filled data
     router.push({
       pathname: '/custom-item',
@@ -84,7 +90,7 @@ export default function AddItemScreen() {
               { color: colors.text },
               selectedCategory === category && { color: 'white' }
             ]}>
-              {category ? categoryTranslations[category] : 'Tutti'}
+              {category ? getCategoryTranslation(category) : t('filter.all_categories')}
             </ThemedText>
           </TouchableOpacity>
         )}
@@ -94,7 +100,7 @@ export default function AddItemScreen() {
     </View>
   );
 
-  const renderItem = ({ item }: { item: PredefinedItem }) => (
+  const renderItem = ({ item }: { item: LocalizedPredefinedItem }) => (
     <TouchableOpacity 
       style={[styles.itemCard, { backgroundColor: colors.card }]}
       onPress={() => handleItemSelect(item)}
@@ -109,7 +115,7 @@ export default function AddItemScreen() {
         </ThemedText>
         <View style={[styles.categoryBadge, { backgroundColor: gray[100] }]}>
           <ThemedText style={[styles.categoryText, { color: gray[600] }]}>
-            {categoryTranslations[item.category]}
+            {getCategoryTranslation(item.category)}
           </ThemedText>
         </View>
       </View>
@@ -120,11 +126,22 @@ export default function AddItemScreen() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <IconSymbol name="chevron.left" size={24} color={colors.text} />
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={[styles.backButton, { backgroundColor: gray[100] }]}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="chevron.left" size={20} color={colors.text} />
         </TouchableOpacity>
-        <ThemedText style={[styles.title, { color: colors.text }]}>Aggiungi Oggetto</ThemedText>
-        <View style={styles.placeholder} />
+        <ThemedText style={[styles.title, { color: colors.text }]}>{t('action.add_item')}</ThemedText>
+        <TouchableOpacity 
+          style={[styles.cancelButton, { backgroundColor: gray[100] }]}
+          onPress={() => router.back()}
+        >
+          <ThemedText style={[styles.cancelText, { color: colors.text }]}>
+            {t('action.cancel')}
+          </ThemedText>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchSection}>
@@ -132,7 +149,7 @@ export default function AddItemScreen() {
           <IconSymbol name="magnifyingglass" size={20} color={gray[400]} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Cerca oggetto..."
+            placeholder={t('search.placeholder')}
             placeholderTextColor={gray[400]}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -145,7 +162,7 @@ export default function AddItemScreen() {
       <View style={styles.content}>
         <View style={styles.sectionHeader}>
           <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-            Oggetti Suggeriti ({filteredItems.length})
+            {t('nav.explore')} ({filteredItems.length})
           </ThemedText>
         </View>
 
@@ -165,7 +182,7 @@ export default function AddItemScreen() {
         >
           <IconSymbol name="plus.circle.fill" size={24} color={colors.primary} />
           <ThemedText style={[styles.customButtonText, { color: colors.text }]}>
-            Non trovo il mio oggetto
+            {t('form.custom_item')}
           </ThemedText>
         </TouchableOpacity>
       </View>
@@ -186,14 +203,26 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: {
-    padding: 4,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
-  placeholder: {
-    width: 32,
+  cancelButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  cancelText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   searchSection: {
     padding: 20,
