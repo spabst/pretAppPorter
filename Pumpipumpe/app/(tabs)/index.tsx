@@ -1,15 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, TextInput, View, Alert } from 'react-native';
+import { StyleSheet, FlatList, TextInput, View, Alert, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { mockApi } from '@/services/mockApi';
-import { Item } from '@/types';
+import { Item, ItemCategory } from '@/types';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+
+const categoryIcons = {
+  [ItemCategory.TOOLS]: 'hammer.fill',
+  [ItemCategory.ELECTRONICS]: 'tv.fill',
+  [ItemCategory.BOOKS]: 'book.fill',
+  [ItemCategory.KITCHEN]: 'fork.knife',
+  [ItemCategory.GARDEN]: 'leaf.fill',
+  [ItemCategory.SPORTS]: 'figure.run',
+  [ItemCategory.HOUSEHOLD]: 'house.fill',
+  [ItemCategory.AUTOMOTIVE]: 'car.fill',
+  [ItemCategory.OTHER]: 'ellipsis'
+};
+
+const categoryTranslations = {
+  [ItemCategory.TOOLS]: 'Attrezzi',
+  [ItemCategory.ELECTRONICS]: 'Elettronica',
+  [ItemCategory.BOOKS]: 'Libri',
+  [ItemCategory.KITCHEN]: 'Cucina',
+  [ItemCategory.GARDEN]: 'Giardino',
+  [ItemCategory.SPORTS]: 'Sport',
+  [ItemCategory.HOUSEHOLD]: 'Casa',
+  [ItemCategory.AUTOMOTIVE]: 'Auto',
+  [ItemCategory.OTHER]: 'Altro'
+};
 
 export default function BrowseScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
   useEffect(() => {
     loadItems();
@@ -39,55 +68,119 @@ export default function BrowseScreen() {
     }
   };
 
-  const renderItem = ({ item }: { item: Item }) => (
-    <ThemedView style={styles.itemCard}>
-      <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
-        <ThemedText type="subtitle" style={styles.itemTitle}>{item.title}</ThemedText>
-        <ThemedText style={styles.itemDescription} numberOfLines={2}>
-          {item.description}
-        </ThemedText>
-        <ThemedText style={styles.itemOwner}>by {item.owner.name}</ThemedText>
-        <View style={styles.itemMeta}>
-          <ThemedText style={[styles.categoryTag, { backgroundColor: '#e3f2fd' }]}>
-            {item.category}
-          </ThemedText>
-          <ThemedText style={[styles.statusTag, item.isAvailable ? styles.available : styles.unavailable]}>
-            {item.isAvailable ? 'Available' : 'Not Available'}
-          </ThemedText>
-        </View>
+  const handleCategorySelect = async (category: ItemCategory) => {
+    try {
+      setLoading(true);
+      setSelectedCategory(category);
+      const data = await mockApi.getItems({ category });
+      setItems(data);
+    } catch {
+      Alert.alert('Error', 'Failed to filter items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetFilter = async () => {
+    setSelectedCategory(null);
+    loadItems();
+  };
+
+  const renderCategoryGrid = () => (
+    <View style={styles.categorySection}>
+      <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Categorie</ThemedText>
+      <View style={styles.categoryGrid}>
+        {Object.values(ItemCategory).slice(0, 4).map((category) => (
+          <TouchableOpacity
+            key={category}
+            style={[styles.categoryCard, { backgroundColor: colors.card }]}
+            onPress={() => handleCategorySelect(category)}
+          >
+            <View style={[styles.categoryIcon, { backgroundColor: colors.primary }]}>
+              <IconSymbol 
+                name={categoryIcons[category]} 
+                size={32} 
+                color="white" 
+              />
+            </View>
+            <ThemedText style={[styles.categoryLabel, { color: colors.text }]}>
+              {categoryTranslations[category]}
+            </ThemedText>
+          </TouchableOpacity>
+        ))}
       </View>
-    </ThemedView>
+    </View>
+  );
+
+  const renderItemsList = () => (
+    <View style={styles.itemsSection}>
+      <View style={styles.itemsHeader}>
+        <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
+          {selectedCategory ? `Oggetti - ${categoryTranslations[selectedCategory]}` : 'Oggetti Disponibili'}
+        </ThemedText>
+        {selectedCategory && (
+          <TouchableOpacity onPress={resetFilter}>
+            <ThemedText style={[styles.clearFilter, { color: colors.primary }]}>Tutti</ThemedText>
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {items.map((item) => (
+        <TouchableOpacity key={item.id} style={[styles.itemCard, { backgroundColor: colors.card }]}>
+          <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+          <View style={styles.itemInfo}>
+            <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
+            <ThemedText style={[styles.itemOwner, { color: colors.gray[500] }]}>Da {item.owner.name}</ThemedText>
+            <View style={styles.itemMeta}>
+              <View style={[styles.statusBadge, item.isAvailable ? styles.availableBadge : styles.unavailableBadge]}>
+                <ThemedText style={[styles.statusText, { color: item.isAvailable ? '#22C55E' : '#EF4444' }]}>
+                  {item.isAvailable ? 'Disponibile' : 'Non disponibile'}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
+          <IconSymbol name="chevron.right" size={16} color={colors.gray[400]} />
+        </TouchableOpacity>
+      ))}
+    </View>
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.title}>Browse Items</ThemedText>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search for items..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          onSubmitEditing={() => handleSearch(searchQuery)}
-          returnKeyType="search"
-        />
-      </ThemedView>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
+        <ThemedText style={[styles.title, { color: colors.text }]}>Cerca Oggetti</ThemedText>
+        <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <IconSymbol name="magnifyingglass" size={20} color={colors.gray[400]} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Cerca oggetto"
+            placeholderTextColor={colors.gray[400]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={() => handleSearch(searchQuery)}
+            returnKeyType="search"
+          />
+        </View>
+      </View>
 
       {loading ? (
-        <ThemedView style={styles.centered}>
-          <ThemedText>Loading items...</ThemedText>
-        </ThemedView>
+        <View style={styles.centered}>
+          <ThemedText style={{ color: colors.text }}>Caricamento...</ThemedText>
+        </View>
       ) : (
         <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
+          data={[{ key: 'content' }]}
+          renderItem={() => (
+            <View>
+              {renderCategoryGrid()}
+              {renderItemsList()}
+            </View>
+          )}
           showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         />
       )}
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
@@ -96,83 +189,131 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   title: {
+    fontSize: 28,
+    fontWeight: '700',
     marginBottom: 16,
   },
-  searchInput: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
   },
-  listContainer: {
-    padding: 16,
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '400',
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+  categorySection: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  categoryCard: {
+    width: '46%',
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  categoryIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  categoryLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  itemsSection: {
+    paddingHorizontal: 20,
+  },
+  itemsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  clearFilter: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   itemCard: {
     flexDirection: 'row',
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 2,
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 1,
   },
   itemImage: {
-    width: 100,
-    height: 100,
-    backgroundColor: '#f0f0f0',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F1F5F9',
+    marginRight: 16,
   },
   itemInfo: {
     flex: 1,
-    padding: 12,
   },
   itemTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
   },
-  itemDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
   itemOwner: {
-    fontSize: 12,
-    color: '#888',
+    fontSize: 14,
     marginBottom: 8,
   },
   itemMeta: {
     flexDirection: 'row',
-    gap: 8,
   },
-  categoryTag: {
-    fontSize: 12,
+  statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
-    color: '#1976d2',
+    borderRadius: 6,
   },
-  statusTag: {
+  availableBadge: {
+    backgroundColor: '#F0FDF4',
+  },
+  unavailableBadge: {
+    backgroundColor: '#FEF2F2',
+  },
+  statusText: {
     fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  available: {
-    backgroundColor: '#e8f5e8',
-    color: '#2e7d32',
-  },
-  unavailable: {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
+    fontWeight: '500',
   },
   centered: {
     flex: 1,

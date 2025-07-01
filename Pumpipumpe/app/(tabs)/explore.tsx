@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, View, Alert, Modal, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, FlatList, TouchableOpacity, View, Alert, Modal, TextInput, ScrollView, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { mockApi } from '@/services/mockApi';
 import { Item, ItemCategory, ItemCondition } from '@/types';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function MyItemsScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
 
   // Form state
   const [title, setTitle] = useState('');
@@ -117,52 +120,60 @@ export default function MyItemsScreen() {
   };
 
   const renderItem = ({ item }: { item: Item }) => (
-    <ThemedView style={styles.itemCard}>
+    <TouchableOpacity style={[styles.itemCard, { backgroundColor: colors.card }]}>
       <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
       <View style={styles.itemInfo}>
-        <ThemedText type="subtitle" style={styles.itemTitle}>{item.title}</ThemedText>
-        <ThemedText style={styles.itemDescription} numberOfLines={2}>
-          {item.description}
-        </ThemedText>
+        <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
+        <ThemedText style={[styles.itemOwner, { color: colors.gray[500] }]}>Da te</ThemedText>
         <View style={styles.itemMeta}>
-          <ThemedText style={[styles.categoryTag, { backgroundColor: '#e3f2fd' }]}>
-            {item.category}
-          </ThemedText>
-          <ThemedText style={[styles.statusTag, item.isAvailable ? styles.available : styles.unavailable]}>
-            {item.isAvailable ? 'Available' : 'Not Available'}
-          </ThemedText>
+          <View style={[styles.statusBadge, item.isAvailable ? styles.availableBadge : styles.unavailableBadge]}>
+            <ThemedText style={[styles.statusText, { color: item.isAvailable ? '#22C55E' : '#EF4444' }]}>
+              {item.isAvailable ? 'Disponibile' : 'Non disponibile'}
+            </ThemedText>
+          </View>
         </View>
       </View>
       <View style={styles.itemActions}>
         <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionButton}>
-          <IconSymbol name="pencil" size={20} color="#666" />
+          <IconSymbol name="pencil" size={20} color={colors.gray[500]} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDelete(item)} style={styles.actionButton}>
-          <IconSymbol name="trash" size={20} color="#d32f2f" />
+          <IconSymbol name="trash" size={20} color="#EF4444" />
         </TouchableOpacity>
       </View>
-    </ThemedView>
+    </TouchableOpacity>
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.title}>My Items</ThemedText>
-        <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
-          <IconSymbol name="plus" size={24} color="#fff" />
-          <ThemedText style={styles.addButtonText}>Add Item</ThemedText>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.background }]}>
+        <ThemedText style={[styles.title, { color: colors.text }]}>I Miei Oggetti</ThemedText>
+        <TouchableOpacity onPress={openAddModal} style={[styles.addButton, { backgroundColor: colors.primary }]}>
+          <IconSymbol name="plus" size={20} color="white" />
+          <ThemedText style={styles.addButtonText}>Aggiungi</ThemedText>
         </TouchableOpacity>
-      </ThemedView>
+      </View>
 
       {loading ? (
-        <ThemedView style={styles.centered}>
-          <ThemedText>Loading your items...</ThemedText>
-        </ThemedView>
+        <View style={styles.centered}>
+          <ThemedText style={{ color: colors.text }}>Caricamento...</ThemedText>
+        </View>
       ) : items.length === 0 ? (
-        <ThemedView style={styles.centered}>
-          <ThemedText style={styles.emptyText}>No items yet</ThemedText>
-          <ThemedText style={styles.emptySubtext}>Add your first item to start sharing!</ThemedText>
-        </ThemedView>
+        <View style={styles.centered}>
+          <View style={[styles.emptyContainer, { backgroundColor: colors.card }]}>
+            <IconSymbol name="plus.circle.fill" size={64} color={colors.gray[300]} />
+            <ThemedText style={[styles.emptyText, { color: colors.text }]}>Nessun oggetto</ThemedText>
+            <ThemedText style={[styles.emptySubtext, { color: colors.gray[500] }]}>
+              Aggiungi il tuo primo oggetto per iniziare a condividere!
+            </ThemedText>
+            <TouchableOpacity 
+              onPress={openAddModal} 
+              style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+            >
+              <ThemedText style={styles.emptyButtonText}>Aggiungi Oggetto</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
       ) : (
         <FlatList
           data={items}
@@ -174,60 +185,80 @@ export default function MyItemsScreen() {
       )}
 
       <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
-        <ThemedView style={styles.modalContainer}>
-          <ThemedView style={styles.modalHeader}>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <ThemedText style={styles.cancelButton}>Cancel</ThemedText>
+              <ThemedText style={[styles.cancelButton, { color: colors.gray[500] }]}>Annulla</ThemedText>
             </TouchableOpacity>
-            <ThemedText type="subtitle">{editingItem ? 'Edit Item' : 'Add Item'}</ThemedText>
+            <ThemedText style={[styles.modalTitle, { color: colors.text }]}>
+              {editingItem ? 'Modifica Oggetto' : 'Aggiungi Oggetto'}
+            </ThemedText>
             <TouchableOpacity onPress={handleSave}>
-              <ThemedText style={styles.saveButton}>Save</ThemedText>
+              <ThemedText style={[styles.saveButton, { color: colors.primary }]}>Salva</ThemedText>
             </TouchableOpacity>
-          </ThemedView>
+          </View>
 
           <ScrollView style={styles.modalContent}>
-            <ThemedText style={styles.fieldLabel}>Title</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Titolo</ThemedText>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
               value={title}
               onChangeText={setTitle}
-              placeholder="What are you sharing?"
+              placeholder="Cosa stai condividendo?"
+              placeholderTextColor={colors.gray[400]}
             />
 
-            <ThemedText style={styles.fieldLabel}>Description</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Descrizione</ThemedText>
             <TextInput
-              style={[styles.textInput, styles.textArea]}
+              style={[styles.textInput, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
               value={description}
               onChangeText={setDescription}
-              placeholder="Describe your item..."
+              placeholder="Descrivi il tuo oggetto..."
+              placeholderTextColor={colors.gray[400]}
               multiline
               numberOfLines={4}
             />
 
-            <ThemedText style={styles.fieldLabel}>Category</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Categoria</ThemedText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               {Object.values(ItemCategory).map((cat) => (
                 <TouchableOpacity
                   key={cat}
                   onPress={() => setCategory(cat)}
-                  style={[styles.categoryButton, category === cat && styles.selectedCategory]}
+                  style={[
+                    styles.categoryButton, 
+                    { backgroundColor: colors.gray[100] },
+                    category === cat && { backgroundColor: colors.primary }
+                  ]}
                 >
-                  <ThemedText style={[styles.categoryText, category === cat && styles.selectedCategoryText]}>
+                  <ThemedText style={[
+                    styles.categoryText, 
+                    { color: colors.text },
+                    category === cat && { color: 'white' }
+                  ]}>
                     {cat.replace('_', ' ')}
                   </ThemedText>
                 </TouchableOpacity>
               ))}
             </ScrollView>
 
-            <ThemedText style={styles.fieldLabel}>Condition</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Condizioni</ThemedText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               {Object.values(ItemCondition).map((cond) => (
                 <TouchableOpacity
                   key={cond}
                   onPress={() => setCondition(cond)}
-                  style={[styles.categoryButton, condition === cond && styles.selectedCategory]}
+                  style={[
+                    styles.categoryButton, 
+                    { backgroundColor: colors.gray[100] },
+                    condition === cond && { backgroundColor: colors.primary }
+                  ]}
                 >
-                  <ThemedText style={[styles.categoryText, condition === cond && styles.selectedCategoryText]}>
+                  <ThemedText style={[
+                    styles.categoryText, 
+                    { color: colors.text },
+                    condition === cond && { color: 'white' }
+                  ]}>
                     {cond.replace('_', ' ')}
                   </ThemedText>
                 </TouchableOpacity>
@@ -238,15 +269,15 @@ export default function MyItemsScreen() {
               onPress={() => setIsAvailable(!isAvailable)}
               style={styles.availabilityToggle}
             >
-              <ThemedText>Available for borrowing</ThemedText>
-              <ThemedText style={[styles.toggle, isAvailable && styles.toggleActive]}>
-                {isAvailable ? '✓' : '○'}
-              </ThemedText>
+              <ThemedText style={{ color: colors.text }}>Disponibile per il prestito</ThemedText>
+              <View style={[styles.toggle, isAvailable && styles.toggleActive]}>
+                {isAvailable && <IconSymbol name="checkmark" size={16} color="white" />}
+              </View>
             </TouchableOpacity>
           </ScrollView>
-        </ThemedView>
+        </SafeAreaView>
       </Modal>
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
@@ -258,86 +289,83 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   title: {
+    fontSize: 28,
+    fontWeight: '700',
     flex: 1,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2196f3',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 12,
     gap: 8,
   },
   addButtonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: '600',
+    fontSize: 16,
   },
   listContainer: {
-    padding: 16,
+    padding: 20,
   },
   itemCard: {
     flexDirection: 'row',
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 2,
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 1,
   },
   itemImage: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#f0f0f0',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F1F5F9',
+    marginRight: 16,
   },
   itemInfo: {
     flex: 1,
-    padding: 12,
   },
   itemTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
   },
-  itemDescription: {
+  itemOwner: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 8,
   },
   itemMeta: {
     flexDirection: 'row',
-    gap: 8,
   },
-  categoryTag: {
-    fontSize: 12,
+  statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
-    color: '#1976d2',
+    borderRadius: 6,
   },
-  statusTag: {
+  availableBadge: {
+    backgroundColor: '#F0FDF4',
+  },
+  unavailableBadge: {
+    backgroundColor: '#FEF2F2',
+  },
+  statusText: {
     fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  available: {
-    backgroundColor: '#e8f5e8',
-    color: '#2e7d32',
-  },
-  unavailable: {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
+    fontWeight: '500',
   },
   itemActions: {
-    justifyContent: 'center',
-    paddingHorizontal: 12,
+    flexDirection: 'row',
     gap: 8,
   },
   actionButton: {
@@ -347,14 +375,40 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  emptyContainer: {
+    padding: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    maxWidth: 300,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   emptyText: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: '600',
+    marginTop: 16,
     marginBottom: 8,
   },
   emptySubtext: {
-    color: '#666',
+    fontSize: 16,
     textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  emptyButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
   },
   modalContainer: {
     flex: 1,
@@ -363,33 +417,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: 60,
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
   },
   cancelButton: {
-    color: '#666',
+    fontSize: 16,
   },
   saveButton: {
-    color: '#2196f3',
+    fontSize: 16,
     fontWeight: '600',
   },
   modalContent: {
     flex: 1,
-    padding: 16,
+    padding: 20,
   },
   fieldLabel: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    marginTop: 16,
+    marginTop: 20,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
   },
   textArea: {
@@ -397,36 +452,35 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   categoryScroll: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   categoryButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    paddingVertical: 10,
+    marginRight: 12,
     borderRadius: 20,
-    backgroundColor: '#f5f5f5',
-  },
-  selectedCategory: {
-    backgroundColor: '#2196f3',
   },
   categoryText: {
     textTransform: 'capitalize',
-  },
-  selectedCategoryText: {
-    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
   availabilityToggle: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    marginTop: 16,
+    paddingVertical: 20,
+    marginTop: 20,
   },
   toggle: {
-    fontSize: 20,
-    color: '#ccc',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   toggleActive: {
-    color: '#4caf50',
+    backgroundColor: '#22C55E',
   },
 });
