@@ -3,12 +3,12 @@ import { StyleSheet, FlatList, TextInput, View, Alert, TouchableOpacity, SafeAre
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { LanguageSelector } from '@/components/LanguageSelectorV2';
 import { mockApi } from '@/services/mockApi';
 import { Item, ItemCategory } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { useLanguage } from '@/contexts/LanguageContext';
+import { useLanguage } from '@/contexts/LanguageContextV2';
 
 const categoryIcons = {
   [ItemCategory.TOOLS]: 'hammer.fill',
@@ -156,7 +156,7 @@ export default function BrowseScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <ThemedText style={[styles.title, { color: colors.text }]}>{t('action.search')}</ThemedText>
-        <LanguageSelector style={styles.languageSelector} />
+        <LanguageSelector compact={true} style={styles.languageSelector} />
         <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <IconSymbol name="magnifyingglass" size={20} color={gray[400]} />
           <TextInput
