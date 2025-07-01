@@ -1,110 +1,432 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, FlatList, TouchableOpacity, View, Alert, Modal, TextInput, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { mockApi } from '@/services/mockApi';
+import { Item, ItemCategory, ItemCondition } from '@/types';
 
-export default function TabTwoScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
+export default function MyItemsScreen() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+
+  // Form state
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<ItemCategory>(ItemCategory.OTHER);
+  const [condition, setCondition] = useState<ItemCondition>(ItemCondition.GOOD);
+  const [isAvailable, setIsAvailable] = useState(true);
+
+  useEffect(() => {
+    loadUserItems();
+  }, []);
+
+  const loadUserItems = async () => {
+    try {
+      setLoading(true);
+      const user = await mockApi.getCurrentUser();
+      const data = await mockApi.getUserItems(user.id);
+      setItems(data);
+    } catch {
+      Alert.alert('Error', 'Failed to load your items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openAddModal = () => {
+    resetForm();
+    setShowAddModal(true);
+  };
+
+  const openEditModal = (item: Item) => {
+    setEditingItem(item);
+    setTitle(item.title);
+    setDescription(item.description);
+    setCategory(item.category);
+    setCondition(item.condition);
+    setIsAvailable(item.isAvailable);
+    setShowAddModal(true);
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setCategory(ItemCategory.OTHER);
+    setCondition(ItemCondition.GOOD);
+    setIsAvailable(true);
+    setEditingItem(null);
+  };
+
+  const handleSave = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a title');
+      return;
+    }
+
+    try {
+      const itemData = {
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        condition,
+        isAvailable,
+        images: ['https://via.placeholder.com/300x300?text=' + encodeURIComponent(title)],
+        tags: []
+      };
+
+      if (editingItem) {
+        await mockApi.updateItem(editingItem.id, itemData);
+      } else {
+        await mockApi.createItem(itemData);
+      }
+
+      setShowAddModal(false);
+      resetForm();
+      loadUserItems();
+      Alert.alert('Success', editingItem ? 'Item updated!' : 'Item added!');
+    } catch {
+      Alert.alert('Error', 'Failed to save item');
+    }
+  };
+
+  const handleDelete = (item: Item) => {
+    Alert.alert(
+      'Delete Item',
+      `Are you sure you want to delete "${item.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await mockApi.deleteItem(item.id);
+              loadUserItems();
+              Alert.alert('Success', 'Item deleted');
+            } catch {
+              Alert.alert('Error', 'Failed to delete item');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const renderItem = ({ item }: { item: Item }) => (
+    <ThemedView style={styles.itemCard}>
+      <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+      <View style={styles.itemInfo}>
+        <ThemedText type="subtitle" style={styles.itemTitle}>{item.title}</ThemedText>
+        <ThemedText style={styles.itemDescription} numberOfLines={2}>
+          {item.description}
         </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
+        <View style={styles.itemMeta}>
+          <ThemedText style={[styles.categoryTag, { backgroundColor: '#e3f2fd' }]}>
+            {item.category}
           </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+          <ThemedText style={[styles.statusTag, item.isAvailable ? styles.available : styles.unavailable]}>
+            {item.isAvailable ? 'Available' : 'Not Available'}
+          </ThemedText>
+        </View>
+      </View>
+      <View style={styles.itemActions}>
+        <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionButton}>
+          <IconSymbol name="pencil" size={20} color="#666" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => handleDelete(item)} style={styles.actionButton}>
+          <IconSymbol name="trash" size={20} color="#d32f2f" />
+        </TouchableOpacity>
+      </View>
+    </ThemedView>
+  );
+
+  return (
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title" style={styles.title}>My Items</ThemedText>
+        <TouchableOpacity onPress={openAddModal} style={styles.addButton}>
+          <IconSymbol name="plus" size={24} color="#fff" />
+          <ThemedText style={styles.addButtonText}>Add Item</ThemedText>
+        </TouchableOpacity>
+      </ThemedView>
+
+      {loading ? (
+        <ThemedView style={styles.centered}>
+          <ThemedText>Loading your items...</ThemedText>
+        </ThemedView>
+      ) : items.length === 0 ? (
+        <ThemedView style={styles.centered}>
+          <ThemedText style={styles.emptyText}>No items yet</ThemedText>
+          <ThemedText style={styles.emptySubtext}>Add your first item to start sharing!</ThemedText>
+        </ThemedView>
+      ) : (
+        <FlatList
+          data={items}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      <Modal visible={showAddModal} animationType="slide" presentationStyle="pageSheet">
+        <ThemedView style={styles.modalContainer}>
+          <ThemedView style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowAddModal(false)}>
+              <ThemedText style={styles.cancelButton}>Cancel</ThemedText>
+            </TouchableOpacity>
+            <ThemedText type="subtitle">{editingItem ? 'Edit Item' : 'Add Item'}</ThemedText>
+            <TouchableOpacity onPress={handleSave}>
+              <ThemedText style={styles.saveButton}>Save</ThemedText>
+            </TouchableOpacity>
+          </ThemedView>
+
+          <ScrollView style={styles.modalContent}>
+            <ThemedText style={styles.fieldLabel}>Title</ThemedText>
+            <TextInput
+              style={styles.textInput}
+              value={title}
+              onChangeText={setTitle}
+              placeholder="What are you sharing?"
+            />
+
+            <ThemedText style={styles.fieldLabel}>Description</ThemedText>
+            <TextInput
+              style={[styles.textInput, styles.textArea]}
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Describe your item..."
+              multiline
+              numberOfLines={4}
+            />
+
+            <ThemedText style={styles.fieldLabel}>Category</ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+              {Object.values(ItemCategory).map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  onPress={() => setCategory(cat)}
+                  style={[styles.categoryButton, category === cat && styles.selectedCategory]}
+                >
+                  <ThemedText style={[styles.categoryText, category === cat && styles.selectedCategoryText]}>
+                    {cat.replace('_', ' ')}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <ThemedText style={styles.fieldLabel}>Condition</ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+              {Object.values(ItemCondition).map((cond) => (
+                <TouchableOpacity
+                  key={cond}
+                  onPress={() => setCondition(cond)}
+                  style={[styles.categoryButton, condition === cond && styles.selectedCategory]}
+                >
+                  <ThemedText style={[styles.categoryText, condition === cond && styles.selectedCategoryText]}>
+                    {cond.replace('_', ' ')}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              onPress={() => setIsAvailable(!isAvailable)}
+              style={styles.availabilityToggle}
+            >
+              <ThemedText>Available for borrowing</ThemedText>
+              <ThemedText style={[styles.toggle, isAvailable && styles.toggleActive]}>
+                {isAvailable ? '✓' : '○'}
+              </ThemedText>
+            </TouchableOpacity>
+          </ScrollView>
+        </ThemedView>
+      </Modal>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
-  titleContainer: {
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    paddingTop: 60,
+  },
+  title: {
+    flex: 1,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2196f3',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  listContainer: {
+    padding: 16,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  itemImage: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#f0f0f0',
+  },
+  itemInfo: {
+    flex: 1,
+    padding: 12,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  itemMeta: {
     flexDirection: 'row',
     gap: 8,
+  },
+  categoryTag: {
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    color: '#1976d2',
+  },
+  statusTag: {
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  available: {
+    backgroundColor: '#e8f5e8',
+    color: '#2e7d32',
+  },
+  unavailable: {
+    backgroundColor: '#ffebee',
+    color: '#c62828',
+  },
+  itemActions: {
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  actionButton: {
+    padding: 8,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    color: '#666',
+    textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: 60,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  cancelButton: {
+    color: '#666',
+  },
+  saveButton: {
+    color: '#2196f3',
+    fontWeight: '600',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16,
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  categoryScroll: {
+    marginBottom: 16,
+  },
+  categoryButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+  },
+  selectedCategory: {
+    backgroundColor: '#2196f3',
+  },
+  categoryText: {
+    textTransform: 'capitalize',
+  },
+  selectedCategoryText: {
+    color: '#fff',
+  },
+  availabilityToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    marginTop: 16,
+  },
+  toggle: {
+    fontSize: 20,
+    color: '#ccc',
+  },
+  toggleActive: {
+    color: '#4caf50',
   },
 });

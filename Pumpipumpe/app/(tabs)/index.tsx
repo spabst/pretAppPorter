@@ -1,75 +1,182 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, FlatList, TextInput, View, Alert } from 'react-native';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { mockApi } from '@/services/mockApi';
+import { Item } from '@/types';
 
-export default function HomeScreen() {
+export default function BrowseScreen() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadItems();
+  }, []);
+
+  const loadItems = async () => {
+    try {
+      setLoading(true);
+      const data = await mockApi.getItems();
+      setItems(data);
+    } catch {
+      Alert.alert('Error', 'Failed to load items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    try {
+      setLoading(true);
+      const data = await mockApi.searchItems(query);
+      setItems(data);
+    } catch {
+      Alert.alert('Error', 'Search failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderItem = ({ item }: { item: Item }) => (
+    <ThemedView style={styles.itemCard}>
+      <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+      <View style={styles.itemInfo}>
+        <ThemedText type="subtitle" style={styles.itemTitle}>{item.title}</ThemedText>
+        <ThemedText style={styles.itemDescription} numberOfLines={2}>
+          {item.description}
+        </ThemedText>
+        <ThemedText style={styles.itemOwner}>by {item.owner.name}</ThemedText>
+        <View style={styles.itemMeta}>
+          <ThemedText style={[styles.categoryTag, { backgroundColor: '#e3f2fd' }]}>
+            {item.category}
+          </ThemedText>
+          <ThemedText style={[styles.statusTag, item.isAvailable ? styles.available : styles.unavailable]}>
+            {item.isAvailable ? 'Available' : 'Not Available'}
+          </ThemedText>
+        </View>
+      </View>
+    </ThemedView>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.header}>
+        <ThemedText type="title" style={styles.title}>Browse Items</ThemedText>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search for items..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={() => handleSearch(searchQuery)}
+          returnKeyType="search"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+
+      {loading ? (
+        <ThemedView style={styles.centered}>
+          <ThemedText>Loading items...</ThemedText>
+        </ThemedView>
+      ) : (
+        <FlatList
+          data={items}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  title: {
+    marginBottom: 16,
+  },
+  searchInput: {
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  listContainer: {
+    padding: 16,
+  },
+  itemCard: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  itemImage: {
+    width: 100,
+    height: 100,
+    backgroundColor: '#f0f0f0',
+  },
+  itemInfo: {
+    flex: 1,
+    padding: 12,
+  },
+  itemTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#666',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  itemOwner: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 8,
+  },
+  itemMeta: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  categoryTag: {
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    color: '#1976d2',
+  },
+  statusTag: {
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  available: {
+    backgroundColor: '#e8f5e8',
+    color: '#2e7d32',
+  },
+  unavailable: {
+    backgroundColor: '#ffebee',
+    color: '#c62828',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
