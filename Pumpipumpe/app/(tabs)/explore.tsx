@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, View, Alert, Modal, TextInput, ScrollView, SafeAreaView } from 'react-native';
 import { Image } from 'expo-image';
+import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { mockApi } from '@/services/mockApi';
@@ -27,6 +28,13 @@ export default function MyItemsScreen() {
     loadUserItems();
   }, []);
 
+  // Reload items when screen comes into focus (after adding new item)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserItems();
+    }, [])
+  );
+
   const loadUserItems = async () => {
     try {
       setLoading(true);
@@ -41,8 +49,7 @@ export default function MyItemsScreen() {
   };
 
   const openAddModal = () => {
-    resetForm();
-    setShowAddModal(true);
+    router.push('/add-item');
   };
 
   const openEditModal = (item: Item) => {
@@ -167,7 +174,7 @@ export default function MyItemsScreen() {
               Aggiungi il tuo primo oggetto per iniziare a condividere!
             </ThemedText>
             <TouchableOpacity 
-              onPress={openAddModal} 
+              onPress={() => router.push('/add-item')} 
               style={[styles.emptyButton, { backgroundColor: colors.primary }]}
             >
               <ThemedText style={styles.emptyButtonText}>Aggiungi Oggetto</ThemedText>
