@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { mockApi } from '@/services/mockApi';
 import { Item, ItemCategory, ItemCondition } from '@/types';
-import { Colors } from '@/constants/Colors';
+import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 export default function MyItemsScreen() {
@@ -16,6 +16,7 @@ export default function MyItemsScreen() {
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const gray = createGrayHelper(colors);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -131,7 +132,7 @@ export default function MyItemsScreen() {
       <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
       <View style={styles.itemInfo}>
         <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
-        <ThemedText style={[styles.itemOwner, { color: colors.gray[500] }]}>Da te</ThemedText>
+        <ThemedText style={[styles.itemOwner, { color: gray[500] }]}>Da te</ThemedText>
         <View style={styles.itemMeta}>
           <View style={[styles.statusBadge, item.isAvailable ? styles.availableBadge : styles.unavailableBadge]}>
             <ThemedText style={[styles.statusText, { color: item.isAvailable ? '#22C55E' : '#EF4444' }]}>
@@ -142,7 +143,7 @@ export default function MyItemsScreen() {
       </View>
       <View style={styles.itemActions}>
         <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionButton}>
-          <IconSymbol name="pencil" size={20} color={colors.gray[500]} />
+          <IconSymbol name="pencil" size={20} color={gray[500]} />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => handleDelete(item)} style={styles.actionButton}>
           <IconSymbol name="trash" size={20} color="#EF4444" />
@@ -168,9 +169,9 @@ export default function MyItemsScreen() {
       ) : items.length === 0 ? (
         <View style={styles.centered}>
           <View style={[styles.emptyContainer, { backgroundColor: colors.card }]}>
-            <IconSymbol name="plus.circle.fill" size={64} color={colors.gray[300]} />
+            <IconSymbol name="plus.circle.fill" size={64} color={gray[300]} />
             <ThemedText style={[styles.emptyText, { color: colors.text }]}>Nessun oggetto</ThemedText>
-            <ThemedText style={[styles.emptySubtext, { color: colors.gray[500] }]}>
+            <ThemedText style={[styles.emptySubtext, { color: gray[500] }]}>
               Aggiungi il tuo primo oggetto per iniziare a condividere!
             </ThemedText>
             <TouchableOpacity 
@@ -195,7 +196,7 @@ export default function MyItemsScreen() {
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <ThemedText style={[styles.cancelButton, { color: colors.gray[500] }]}>Annulla</ThemedText>
+              <ThemedText style={[styles.cancelButton, { color: gray[500] }]}>Annulla</ThemedText>
             </TouchableOpacity>
             <ThemedText style={[styles.modalTitle, { color: colors.text }]}>
               {editingItem ? 'Modifica Oggetto' : 'Aggiungi Oggetto'}
@@ -212,7 +213,7 @@ export default function MyItemsScreen() {
               value={title}
               onChangeText={setTitle}
               placeholder="Cosa stai condividendo?"
-              placeholderTextColor={colors.gray[400]}
+              placeholderTextColor={gray[400]}
             />
 
             <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Descrizione</ThemedText>
@@ -221,7 +222,7 @@ export default function MyItemsScreen() {
               value={description}
               onChangeText={setDescription}
               placeholder="Descrivi il tuo oggetto..."
-              placeholderTextColor={colors.gray[400]}
+              placeholderTextColor={gray[400]}
               multiline
               numberOfLines={4}
             />
@@ -234,7 +235,7 @@ export default function MyItemsScreen() {
                   onPress={() => setCategory(cat)}
                   style={[
                     styles.categoryButton, 
-                    { backgroundColor: colors.gray[100] },
+                    { backgroundColor: gray[100] },
                     category === cat && { backgroundColor: colors.primary }
                   ]}
                 >
@@ -257,7 +258,7 @@ export default function MyItemsScreen() {
                   onPress={() => setCondition(cond)}
                   style={[
                     styles.categoryButton, 
-                    { backgroundColor: colors.gray[100] },
+                    { backgroundColor: gray[100] },
                     condition === cond && { backgroundColor: colors.primary }
                   ]}
                 >

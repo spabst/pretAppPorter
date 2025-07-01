@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { predefinedItems, searchPredefinedItems, PredefinedItem } from '@/data/predefinedItems';
 import { ItemCategory } from '@/types';
-import { Colors } from '@/constants/Colors';
+import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const categoryTranslations = {
@@ -26,6 +26,7 @@ export default function AddItemScreen() {
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const gray = createGrayHelper(colors);
 
   const filterItems = React.useCallback(() => {
     let items = predefinedItems;
@@ -73,7 +74,7 @@ export default function AddItemScreen() {
           <TouchableOpacity
             style={[
               styles.categoryFilterButton,
-              { backgroundColor: colors.gray[100] },
+              { backgroundColor: gray[100] },
               selectedCategory === category && { backgroundColor: colors.primary }
             ]}
             onPress={() => setSelectedCategory(category)}
@@ -99,20 +100,20 @@ export default function AddItemScreen() {
       onPress={() => handleItemSelect(item)}
     >
       <View style={[styles.itemIcon, { backgroundColor: colors.primary }]}>
-        <IconSymbol name={item.icon} size={24} color="white" />
+        <IconSymbol name={item.icon as any} size={24} color="white" />
       </View>
       <View style={styles.itemInfo}>
         <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
-        <ThemedText style={[styles.itemDescription, { color: colors.gray[500] }]} numberOfLines={2}>
+        <ThemedText style={[styles.itemDescription, { color: gray[500] }]} numberOfLines={2}>
           {item.description}
         </ThemedText>
-        <View style={[styles.categoryBadge, { backgroundColor: colors.gray[100] }]}>
-          <ThemedText style={[styles.categoryText, { color: colors.gray[600] }]}>
+        <View style={[styles.categoryBadge, { backgroundColor: gray[100] }]}>
+          <ThemedText style={[styles.categoryText, { color: gray[600] }]}>
             {categoryTranslations[item.category]}
           </ThemedText>
         </View>
       </View>
-      <IconSymbol name="chevron.right" size={16} color={colors.gray[400]} />
+      <IconSymbol name="chevron.right" size={16} color={gray[400]} />
     </TouchableOpacity>
   );
 
@@ -128,11 +129,11 @@ export default function AddItemScreen() {
 
       <View style={styles.searchSection}>
         <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <IconSymbol name="magnifyingglass" size={20} color={colors.gray[400]} />
+          <IconSymbol name="magnifyingglass" size={20} color={gray[400]} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder="Cerca oggetto..."
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={gray[400]}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -159,7 +160,7 @@ export default function AddItemScreen() {
 
       <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
         <TouchableOpacity 
-          style={[styles.customButton, { backgroundColor: colors.gray[100] }]}
+          style={[styles.customButton, { backgroundColor: gray[100] }]}
           onPress={handleCustomItem}
         >
           <IconSymbol name="plus.circle.fill" size={24} color={colors.primary} />

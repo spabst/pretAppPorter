@@ -16,7 +16,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Trapano',
     category: ItemCategory.TOOLS,
     description: 'Trapano elettrico per fori e avvitatura',
-    icon: 'drill.fill',
+    icon: 'wrench.and.screwdriver.fill',
     tags: ['trapano', 'utensile', 'elettrico', 'fori']
   },
   {
@@ -24,7 +24,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Scala',
     category: ItemCategory.TOOLS,
     description: 'Scala pieghevole in alluminio',
-    icon: 'ladder',
+    icon: 'stairs',
     tags: ['scala', 'alluminio', 'altezza', 'lavori']
   },
   {
@@ -40,7 +40,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Set Cacciaviti',
     category: ItemCategory.TOOLS,
     description: 'Set completo di cacciaviti varie misure',
-    icon: 'screwdriver.fill',
+    icon: 'wrench.fill',
     tags: ['cacciaviti', 'set', 'viti', 'riparazione']
   },
   {
@@ -48,7 +48,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Sega',
     category: ItemCategory.TOOLS,
     description: 'Sega manuale per legno',
-    icon: 'saw.fill',
+    icon: 'scissors',
     tags: ['sega', 'legno', 'taglio']
   },
   {
@@ -56,7 +56,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Livella',
     category: ItemCategory.TOOLS,
     description: 'Livella a bolla per misurazioni precise',
-    icon: 'level.fill',
+    icon: 'ruler.fill',
     tags: ['livella', 'misura', 'preciso', 'costruzione']
   },
   {
@@ -72,7 +72,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Pinze',
     category: ItemCategory.TOOLS,
     description: 'Pinze universali per elettricista',
-    icon: 'pliers.fill',
+    icon: 'wrench.adjustable.fill',
     tags: ['pinze', 'elettricista', 'fili', 'presa']
   },
 
@@ -122,7 +122,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Vanga',
     category: ItemCategory.GARDEN,
     description: 'Vanga per scavare e piantare',
-    icon: 'shovel.fill',
+    icon: 'hand.raised.fill',
     tags: ['vanga', 'scavare', 'piantare', 'terra']
   },
 
@@ -190,7 +190,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Racchetta da Tennis',
     category: ItemCategory.SPORTS,
     description: 'Racchetta professionale da tennis',
-    icon: 'tennis.racket',
+    icon: 'figure.tennis',
     tags: ['tennis', 'racchetta', 'sport', 'campo']
   },
   {
@@ -198,7 +198,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Pallone da Calcio',
     category: ItemCategory.SPORTS,
     description: 'Pallone ufficiale per partite',
-    icon: 'soccer.ball',
+    icon: 'soccerball',
     tags: ['calcio', 'pallone', 'partita', 'sport']
   },
   {
@@ -206,7 +206,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Skateboard',
     category: ItemCategory.SPORTS,
     description: 'Skateboard completo per principianti',
-    icon: 'skateboard',
+    icon: 'figure.skating',
     tags: ['skateboard', 'principianti', 'strada', 'giovani']
   },
   {
@@ -224,7 +224,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Proiettore',
     category: ItemCategory.ELECTRONICS,
     description: 'Proiettore Full HD per presentazioni',
-    icon: 'projector',
+    icon: 'tv.fill',
     tags: ['proiettore', 'presentazioni', 'film', 'schermo']
   },
   {
@@ -274,7 +274,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Ferro da Stiro',
     category: ItemCategory.HOUSEHOLD,
     description: 'Ferro da stiro a vapore',
-    icon: 'iron',
+    icon: 'flame.fill',
     tags: ['ferro', 'stiro', 'vapore', 'vestiti']
   },
   {
@@ -290,7 +290,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Pulitore Tappeti',
     category: ItemCategory.HOUSEHOLD,
     description: 'Macchina per lavaggio tappeti',
-    icon: 'washer',
+    icon: 'shower.fill',
     tags: ['tappeti', 'pulizia', 'lavaggio', 'casa']
   },
   {
@@ -324,7 +324,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Manometro Gomme',
     category: ItemCategory.AUTOMOTIVE,
     description: 'Manometro digitale per pressione gomme',
-    icon: 'gauge',
+    icon: 'speedometer',
     tags: ['manometro', 'gomme', 'pressione', 'controllo']
   },
   {
@@ -376,7 +376,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Tenda da Campeggio',
     category: ItemCategory.OTHER,
     description: 'Tenda per 4 persone impermeabile',
-    icon: 'tent.fill',
+    icon: 'house.fill',
     tags: ['tenda', 'campeggio', 'outdoor', 'impermeabile']
   },
   {
@@ -416,7 +416,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Gazebo',
     category: ItemCategory.OTHER,
     description: 'Gazebo pieghevole per feste',
-    icon: 'tent.fill',
+    icon: 'house.fill',
     tags: ['gazebo', 'feste', 'giardino', 'ombra']
   },
   {
@@ -440,7 +440,7 @@ export const predefinedItems: PredefinedItem[] = [
     title: 'Chitarra',
     category: ItemCategory.OTHER,
     description: 'Chitarra acustica per principianti',
-    icon: 'guitars.fill',
+    icon: 'music.note',
     tags: ['chitarra', 'acustica', 'musica', 'principianti']
   },
   {

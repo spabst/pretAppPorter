@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { mockApi } from '@/services/mockApi';
 import { Item, ItemCategory } from '@/types';
-import { Colors } from '@/constants/Colors';
+import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const categoryIcons = {
@@ -39,6 +39,7 @@ export default function BrowseScreen() {
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const gray = createGrayHelper(colors);
 
   useEffect(() => {
     loadItems();
@@ -98,7 +99,7 @@ export default function BrowseScreen() {
           >
             <View style={[styles.categoryIcon, { backgroundColor: colors.primary }]}>
               <IconSymbol 
-                name={categoryIcons[category]} 
+                name={categoryIcons[category] as any} 
                 size={32} 
                 color="white" 
               />
@@ -130,7 +131,7 @@ export default function BrowseScreen() {
           <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
           <View style={styles.itemInfo}>
             <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
-            <ThemedText style={[styles.itemOwner, { color: colors.gray[500] }]}>Da {item.owner.name}</ThemedText>
+            <ThemedText style={[styles.itemOwner, { color: gray[500] }]}>Da {item.owner.name}</ThemedText>
             <View style={styles.itemMeta}>
               <View style={[styles.statusBadge, item.isAvailable ? styles.availableBadge : styles.unavailableBadge]}>
                 <ThemedText style={[styles.statusText, { color: item.isAvailable ? '#22C55E' : '#EF4444' }]}>
@@ -139,7 +140,7 @@ export default function BrowseScreen() {
               </View>
             </View>
           </View>
-          <IconSymbol name="chevron.right" size={16} color={colors.gray[400]} />
+          <IconSymbol name="chevron.right" size={16} color={gray[400]} />
         </TouchableOpacity>
       ))}
     </View>
@@ -150,11 +151,11 @@ export default function BrowseScreen() {
       <View style={[styles.header, { backgroundColor: colors.background }]}>
         <ThemedText style={[styles.title, { color: colors.text }]}>Cerca Oggetti</ThemedText>
         <View style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <IconSymbol name="magnifyingglass" size={20} color={colors.gray[400]} />
+          <IconSymbol name="magnifyingglass" size={20} color={gray[400]} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
             placeholder="Cerca oggetto"
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={gray[400]}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onSubmitEditing={() => handleSearch(searchQuery)}

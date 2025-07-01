@@ -5,7 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { mockApi } from '@/services/mockApi';
 import { ItemCategory, ItemCondition } from '@/types';
-import { Colors } from '@/constants/Colors';
+import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const categoryTranslations = {
@@ -32,6 +32,7 @@ export default function CustomItemScreen() {
   const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const gray = createGrayHelper(colors);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -105,7 +106,7 @@ export default function CustomItemScreen() {
             value={title}
             onChangeText={setTitle}
             placeholder="Nome dell'oggetto"
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={gray[400]}
           />
         </View>
 
@@ -120,7 +121,7 @@ export default function CustomItemScreen() {
             value={description}
             onChangeText={setDescription}
             placeholder="Descrivi il tuo oggetto, le sue caratteristiche e condizioni d'uso..."
-            placeholderTextColor={colors.gray[400]}
+            placeholderTextColor={gray[400]}
             multiline
             numberOfLines={4}
           />
@@ -135,7 +136,7 @@ export default function CustomItemScreen() {
                 onPress={() => setCategory(cat)}
                 style={[
                   styles.categoryButton, 
-                  { backgroundColor: colors.gray[100] },
+                  { backgroundColor: gray[100] },
                   category === cat && { backgroundColor: colors.primary }
                 ]}
               >
@@ -160,7 +161,7 @@ export default function CustomItemScreen() {
                 onPress={() => setCondition(cond)}
                 style={[
                   styles.categoryButton, 
-                  { backgroundColor: colors.gray[100] },
+                  { backgroundColor: gray[100] },
                   condition === cond && { backgroundColor: colors.primary }
                 ]}
               >
@@ -185,7 +186,7 @@ export default function CustomItemScreen() {
               <ThemedText style={[styles.toggleTitle, { color: colors.text }]}>
                 Disponibile per il prestito
               </ThemedText>
-              <ThemedText style={[styles.toggleDescription, { color: colors.gray[500] }]}>
+              <ThemedText style={[styles.toggleDescription, { color: gray[500] }]}>
                 I vicini potranno richiedere questo oggetto
               </ThemedText>
             </View>
