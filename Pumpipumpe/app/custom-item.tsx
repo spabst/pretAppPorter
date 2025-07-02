@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, View, Alert, TextInput, ScrollView, SafeAreaView } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Alert, TextInput, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -16,6 +17,7 @@ export default function CustomItemScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   const getCategoryTranslation = (category: ItemCategory) => {
     const translations = {
@@ -90,7 +92,7 @@ export default function CustomItemScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity 
           onPress={() => router.back()} 
@@ -214,7 +216,7 @@ export default function CustomItemScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

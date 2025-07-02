@@ -6,9 +6,9 @@ import {
   TouchableOpacity, 
   View, 
   Alert, 
-  SafeAreaView,
   Image 
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -22,6 +22,7 @@ export default function SettingsScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   // User profile state
   const [userProfile, setUserProfile] = useState({
@@ -140,7 +141,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -325,7 +326,7 @@ export default function SettingsScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
