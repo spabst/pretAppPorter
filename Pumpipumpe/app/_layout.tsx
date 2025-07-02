@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { LanguageProvider } from '@/contexts/LanguageContextV2';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -22,7 +23,8 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <LanguageProvider>
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AuthProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
           {Platform.OS === 'android' && (
             <StatusBar
               barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
@@ -39,7 +41,8 @@ export default function RootLayout() {
             <Stack.Screen name="auth/register" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
-        </ThemeProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </LanguageProvider>
     </SafeAreaProvider>
   );

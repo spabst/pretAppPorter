@@ -15,18 +15,20 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useLanguage } from '@/contexts/LanguageContextV2';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAuth } from '@/contexts/AuthContext';
+import { PublicRoute } from '@/components/AuthGuard';
 
 export default function LoginScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
   const { t } = useLanguage();
+  const { signIn, signInWithOAuth, loading } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateEmail = (email: string) => {
@@ -48,42 +50,39 @@ export default function LoginScreen() {
     setErrors(newErrors);
     
     if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true);
       try {
-        // In production: Authenticate user
-        console.log('Logging in with:', formData.email);
+        const { error } = await signIn(formData.email, formData.password);
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        router.replace('/(tabs)');
+        if (error) {
+          Alert.alert(t('error.generic'), error);
+        } else {
+          // Successful login - navigation will be handled by AuthGuard
+          router.replace('/(tabs)');
+        }
       } catch (error) {
-        Alert.alert(t('error.generic'), 'Failed to sign in');
-      } finally {
-        setIsLoading(false);
+        Alert.alert(t('error.generic'), 'An unexpected error occurred');
       }
     }
   };
 
   const handleSocialAuth = async (provider: 'google' | 'facebook' | 'apple') => {
-    setIsLoading(true);
     try {
-      // In production: Implement social auth
-      console.log('Social auth with:', provider);
+      const { error } = await signInWithOAuth(provider);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      router.replace('/(tabs)');
+      if (error) {
+        Alert.alert(t('error.generic'), error);
+      } else {
+        // Successful login - navigation will be handled by AuthGuard
+        router.replace('/(tabs)');
+      }
     } catch (error) {
       Alert.alert(t('error.generic'), `Failed to sign in with ${provider}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <PublicRoute>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView 
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -145,10 +144,10 @@ export default function LoginScreen() {
           <TouchableOpacity
             style={[styles.primaryButton, { backgroundColor: colors.primary }]}
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={loading}
           >
             <ThemedText style={styles.primaryButtonText}>
-              {isLoading ? (t('loading') || 'Loading...') : (t('auth.sign_in') || 'Sign In')}
+              {loading ? (t('loading') || 'Loading...') : (t('auth.sign_in') || 'Sign In')}
             </ThemedText>
           </TouchableOpacity>
 
@@ -166,7 +165,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => handleSocialAuth('google')}
-              disabled={isLoading}
+              disabled={loading}
             >
               <IconSymbol name="globe" size={20} color={colors.text} />
               <ThemedText style={[styles.socialButtonText, { color: colors.text }]}>Google</ThemedText>
@@ -175,7 +174,7 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]}
               onPress={() => handleSocialAuth('facebook')}
-              disabled={isLoading}
+              disabled={loading}
             >
               <IconSymbol name="person.2.fill" size={20} color={colors.text} />
               <ThemedText style={[styles.socialButtonText, { color: colors.text }]}>Facebook</ThemedText>
@@ -185,7 +184,7 @@ export default function LoginScreen() {
               <TouchableOpacity
                 style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => handleSocialAuth('apple')}
-                disabled={isLoading}
+                disabled={loading}
               >
                 <IconSymbol name="applelogo" size={20} color={colors.text} />
                 <ThemedText style={[styles.socialButtonText, { color: colors.text }]}>Apple</ThemedText>
@@ -207,6 +206,7 @@ export default function LoginScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </PublicRoute>
   );
 }
 

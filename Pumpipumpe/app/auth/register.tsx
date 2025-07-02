@@ -17,8 +17,11 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useLanguage } from '@/contexts/LanguageContextV2';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useAuth } from '@/contexts/AuthContext';
+import { PublicRoute } from '@/components/AuthGuard';
 import * as ImagePicker from 'expo-image-picker';
 import * as Contacts from 'expo-contacts';
+import * as Location from 'expo-location';
 
 type RegistrationStep = 'phone' | 'verification' | 'profile' | 'permissions';
 
@@ -27,9 +30,9 @@ export default function RegisterScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
   const { t } = useLanguage();
+  const { signUp, signInWithOtp, verifyOtp, loading } = useAuth();
 
   const [currentStep, setCurrentStep] = useState<RegistrationStep>('phone');
-  const [isLoading, setIsLoading] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -37,8 +40,10 @@ export default function RegisterScreen() {
     countryCode: '+39',
     verificationCode: '',
     email: '',
+    password: '',
     name: '',
     address: '',
+    location: { lat: 0, lng: 0 } as { lat: number; lng: number },
     profilePicture: null as string | null,
   });
 
@@ -65,19 +70,18 @@ export default function RegisterScreen() {
     setErrors(newErrors);
     
     if (Object.keys(newErrors).length === 0) {
-      setIsLoading(true);
       try {
-        // In production: Send SMS verification code
-        console.log('Sending SMS to:', formData.countryCode + formData.phone);
+        const fullPhone = formData.countryCode + formData.phone;
+        const { error } = await signInWithOtp(fullPhone);
         
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        setCurrentStep('verification');
+        if (error) {
+          Alert.alert(t('error.generic'), error);
+        } else {
+          setCurrentStep('verification');
+          setErrors({});
+        }
       } catch (error) {
         Alert.alert(t('error.generic'), 'Failed to send verification code');
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -88,20 +92,18 @@ export default function RegisterScreen() {
       return;
     }
 
-    setIsLoading(true);
     try {
-      // In production: Verify SMS code
-      console.log('Verifying code:', formData.verificationCode);
+      const fullPhone = formData.countryCode + formData.phone;
+      const { error } = await verifyOtp(fullPhone, formData.verificationCode);
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setCurrentStep('profile');
-      setErrors({});
+      if (error) {
+        setErrors({ verification: error });
+      } else {
+        setCurrentStep('profile');
+        setErrors({});
+      }
     } catch (error) {
       setErrors({ verification: t('auth.code_incorrect') || 'Incorrect verification code' });
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -116,6 +118,10 @@ export default function RegisterScreen() {
       newErrors.email = t('auth.email_invalid') || 'Please enter a valid email';
     }
     
+    if (formData.password.length < 6) {
+      newErrors.password = t('auth.password_short') || 'Password must be at least 6 characters';
+    }
+    
     if (!formData.address.trim()) {
       newErrors.address = t('auth.address_required') || 'Address is required';
     }
@@ -123,7 +129,53 @@ export default function RegisterScreen() {
     setErrors(newErrors);
     
     if (Object.keys(newErrors).length === 0) {
+      // Get location from address
+      await getLocationFromAddress();
       setCurrentStep('permissions');
+    }
+  };
+
+  const getLocationFromAddress = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status === 'granted') {
+        // Try to geocode the address
+        const geocoded = await Location.geocodeAsync(formData.address);
+        
+        if (geocoded.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            location: {
+              lat: geocoded[0].latitude,
+              lng: geocoded[0].longitude
+            }
+          }));
+        } else {
+          // Fallback: use current location if address geocoding fails
+          const location = await Location.getCurrentPositionAsync({});
+          setFormData(prev => ({
+            ...prev,
+            location: {
+              lat: location.coords.latitude,
+              lng: location.coords.longitude
+            }
+          }));
+        }
+      } else {
+        // Default to Zurich coordinates if no permission
+        setFormData(prev => ({
+          ...prev,
+          location: { lat: 47.3769, lng: 8.5417 }
+        }));
+      }
+    } catch (error) {
+      console.error('Location error:', error);
+      // Default to Zurich coordinates on error
+      setFormData(prev => ({
+        ...prev,
+        location: { lat: 47.3769, lng: 8.5417 }
+      }));
     }
   };
 
@@ -164,10 +216,10 @@ export default function RegisterScreen() {
         // Allow user to skip this step
         Alert.alert(
           t('auth.contacts_optional') || 'Optional Step',
-          t('auth.contacts_skip') || 'You can enable this later in settings',
+          t('auth.contacts_optional_desc') || 'You can enable this later in settings',
           [
             { text: t('action.cancel'), style: 'cancel' },
-            { text: t('auth.skip'), onPress: completeRegistration }
+            { text: t('action.skip') || 'Skip', onPress: completeRegistration }
           ]
         );
       }
@@ -178,41 +230,39 @@ export default function RegisterScreen() {
   };
 
   const completeRegistration = async () => {
-    setIsLoading(true);
     try {
-      // In production: Create user account
-      console.log('Creating account with:', formData);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      Alert.alert(
-        t('auth.welcome') || 'Welcome to Pumpipumpe!',
-        t('auth.registration_complete') || 'Your account has been created successfully',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        {
+          name: formData.name,
+          phone: formData.countryCode + formData.phone,
+          address: formData.address,
+          location: formData.location
+        }
       );
+      
+      if (error) {
+        Alert.alert(t('error.generic'), error);
+      } else {
+        Alert.alert(
+          t('auth.welcome') || 'Welcome to Pumpipumpe!',
+          t('auth.registration_complete') || 'Your account has been created successfully',
+          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+        );
+      }
     } catch (error) {
       Alert.alert(t('error.generic'), 'Failed to create account');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleSocialAuth = async (provider: 'google' | 'facebook' | 'apple') => {
-    setIsLoading(true);
     try {
-      // In production: Implement social auth
-      console.log('Social auth with:', provider);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // For demo, go directly to permissions step
-      setCurrentStep('permissions');
+      // For social auth in registration, redirect to main app
+      // The user profile will be created automatically by the AuthContext
+      router.replace('/(tabs)');
     } catch (error) {
       Alert.alert(t('error.generic'), `Failed to sign in with ${provider}`);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -251,10 +301,10 @@ export default function RegisterScreen() {
       <TouchableOpacity
         style={[styles.primaryButton, { backgroundColor: colors.primary }]}
         onPress={handlePhoneSubmit}
-        disabled={isLoading}
+        disabled={loading}
       >
         <ThemedText style={styles.primaryButtonText}>
-          {isLoading ? (t('loading') || 'Loading...') : (t('auth.send_code') || 'Send Code')}
+          {loading ? (t('loading') || 'Loading...') : (t('auth.send_code') || 'Send Code')}
         </ThemedText>
       </TouchableOpacity>
 
@@ -271,7 +321,7 @@ export default function RegisterScreen() {
         <TouchableOpacity
           style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => handleSocialAuth('google')}
-          disabled={isLoading}
+          disabled={loading}
         >
           <IconSymbol name="globe" size={20} color={colors.text} />
           <ThemedText style={[styles.socialButtonText, { color: colors.text }]}>Google</ThemedText>
@@ -280,7 +330,7 @@ export default function RegisterScreen() {
         <TouchableOpacity
           style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]}
           onPress={() => handleSocialAuth('facebook')}
-          disabled={isLoading}
+          disabled={loading}
         >
           <IconSymbol name="person.2.fill" size={20} color={colors.text} />
           <ThemedText style={[styles.socialButtonText, { color: colors.text }]}>Facebook</ThemedText>
@@ -290,7 +340,7 @@ export default function RegisterScreen() {
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: colors.card, borderColor: colors.border }]}
             onPress={() => handleSocialAuth('apple')}
-            disabled={isLoading}
+            disabled={loading}
           >
             <IconSymbol name="applelogo" size={20} color={colors.text} />
             <ThemedText style={[styles.socialButtonText, { color: colors.text }]}>Apple</ThemedText>
@@ -327,10 +377,10 @@ export default function RegisterScreen() {
       <TouchableOpacity
         style={[styles.primaryButton, { backgroundColor: colors.primary }]}
         onPress={handleVerificationSubmit}
-        disabled={isLoading}
+        disabled={loading}
       >
         <ThemedText style={styles.primaryButtonText}>
-          {isLoading ? (t('loading') || 'Loading...') : (t('auth.verify') || 'Verify')}
+          {loading ? (t('loading') || 'Loading...') : (t('auth.verify') || 'Verify')}
         </ThemedText>
       </TouchableOpacity>
 
@@ -401,6 +451,22 @@ export default function RegisterScreen() {
 
       <View style={styles.formField}>
         <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>
+          {t('auth.password') || 'Password'} *
+        </ThemedText>
+        <TextInput
+          style={[styles.textInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+          value={formData.password}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, password: text }))}
+          placeholder={t('auth.password_placeholder') || 'Enter password'}
+          placeholderTextColor={gray[400]}
+          secureTextEntry
+          autoCapitalize="none"
+        />
+        {errors.password && <ThemedText style={[styles.errorText, { color: '#EF4444' }]}>{errors.password}</ThemedText>}
+      </View>
+
+      <View style={styles.formField}>
+        <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>
           {t('profile.address')} *
         </ThemedText>
         <TextInput
@@ -464,10 +530,10 @@ export default function RegisterScreen() {
       <TouchableOpacity
         style={[styles.primaryButton, { backgroundColor: colors.primary }]}
         onPress={handleContactsPermission}
-        disabled={isLoading}
+        disabled={loading}
       >
         <ThemedText style={styles.primaryButtonText}>
-          {isLoading ? (t('loading') || 'Loading...') : (t('auth.allow_contacts') || 'Allow Contacts')}
+          {loading ? (t('loading') || 'Loading...') : (t('auth.allow_contacts') || 'Allow Contacts')}
         </ThemedText>
       </TouchableOpacity>
 
@@ -492,7 +558,8 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <PublicRoute>
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView 
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -545,6 +612,7 @@ export default function RegisterScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </PublicRoute>
   );
 }
 
