@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { mockApi } from '@/services/mockApi';
+import { supabaseApi } from '@/services/supabaseApi';
 import { Item, ItemCategory, ItemCondition } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -41,8 +41,8 @@ export default function MyItemsScreen() {
   const loadUserItems = async () => {
     try {
       setLoading(true);
-      const user = await mockApi.getCurrentUser();
-      const data = await mockApi.getUserItems(user.id);
+      const user = await supabaseApi.getCurrentUser();
+      const data = await supabaseApi.getUserItems(user.id);
       setItems(data);
     } catch {
       Alert.alert('Error', 'Failed to load your items');
@@ -92,9 +92,9 @@ export default function MyItemsScreen() {
       };
 
       if (editingItem) {
-        await mockApi.updateItem(editingItem.id, itemData);
+        await supabaseApi.updateItem(editingItem.id, itemData);
       } else {
-        await mockApi.createItem(itemData);
+        await supabaseApi.createItem(itemData);
       }
 
       setShowAddModal(false);
@@ -117,7 +117,7 @@ export default function MyItemsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await mockApi.deleteItem(item.id);
+              await supabaseApi.deleteItem(item.id);
               loadUserItems();
               Alert.alert('Success', 'Item deleted');
             } catch {

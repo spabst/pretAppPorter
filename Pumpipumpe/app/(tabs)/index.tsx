@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { mockApi } from '@/services/mockApi';
+import { supabaseApi } from '@/services/supabaseApi';
 import { Item, ItemCategory } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -55,7 +55,7 @@ export default function BrowseScreen() {
   const loadItems = async () => {
     try {
       setLoading(true);
-      const data = await mockApi.getItems();
+      const data = await supabaseApi.getItems();
       setItems(data);
     } catch {
       Alert.alert(t('error.generic'), 'Failed to load items');
@@ -67,7 +67,7 @@ export default function BrowseScreen() {
   const handleSearch = async (query: string) => {
     try {
       setLoading(true);
-      const data = await mockApi.searchItems(query);
+      const data = await supabaseApi.searchItems(query);
       setItems(data);
     } catch {
       Alert.alert(t('error.generic'), 'Search failed');
@@ -80,7 +80,7 @@ export default function BrowseScreen() {
     try {
       setLoading(true);
       setSelectedCategory(category);
-      const data = await mockApi.getItems({ category });
+      const data = await supabaseApi.getItems({ category });
       setItems(data);
     } catch {
       Alert.alert(t('error.generic'), 'Failed to filter items');

@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { mockApi } from '@/services/mockApi';
+import { supabaseApi } from '@/services/supabaseApi';
 import { ItemCategory, ItemCondition } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -82,7 +82,7 @@ export default function CustomItemScreen() {
         tags: []
       };
 
-      await mockApi.createItem(itemData);
+      await supabaseApi.createItem(itemData);
       Alert.alert('Successo', t('success.item_added'), [
         { text: 'OK', onPress: () => router.dismiss() }
       ]);
