@@ -3,14 +3,16 @@
 -- Description: Sample users and items for consistent development experience
 
 -- Insert sample users with locations in Switzerland
-INSERT INTO users (id, email, name, phone, address, location) VALUES
+INSERT INTO users (id, email, name, phone, address, location, bio, avatar) VALUES
 (
     'e3de7cf1-a7cb-4826-8cc6-02a3963d7629',
     'john@example.com', 
     'John Doe', 
     '+41791234567', 
     'Rue de la Paix 15, 1003 Lausanne',
-    ST_GeogFromText('POINT(6.6323 46.5197)')
+    ST_GeogFromText('POINT(6.6323 46.5197)'),
+    'Passionate about DIY projects and helping neighbors with tools and equipment.',
+    'https://via.placeholder.com/120x120?text=JD'
 ),
 (
     '3273f6e2-059f-4c7b-8bc8-fa675c6ac46b',
@@ -18,7 +20,9 @@ INSERT INTO users (id, email, name, phone, address, location) VALUES
     'Marie Dupont', 
     '+41792345678', 
     'Avenue Mon-Repos 24, 1005 Lausanne',
-    ST_GeogFromText('POINT(6.6387 46.5229)')
+    ST_GeogFromText('POINT(6.6387 46.5229)'),
+    'Cooking enthusiast who loves sharing kitchen gadgets and trying new recipes.',
+    'https://via.placeholder.com/120x120?text=MD'
 ),
 (
     '44e6bc46-a589-4476-9472-d53980d5ea61',
@@ -26,7 +30,9 @@ INSERT INTO users (id, email, name, phone, address, location) VALUES
     'Peter Schmidt', 
     '+41793456789', 
     'Chemin des Boveresses 155, 1066 Epalinges',
-    ST_GeogFromText('POINT(6.6708 46.5339)')
+    ST_GeogFromText('POINT(6.6708 46.5339)'),
+    'Outdoor adventure lover, always ready to share camping gear and sports equipment.',
+    'https://via.placeholder.com/120x120?text=PS'
 );
 
 -- Insert sample items
@@ -148,6 +154,33 @@ INSERT INTO user_addresses (
     true
 );
 
+-- Insert sample user preferences
+INSERT INTO user_preferences (user_id, notifications, email_updates, share_location, public_profile, auto_accept_requests) VALUES
+(
+    'e3de7cf1-a7cb-4826-8cc6-02a3963d7629', -- John Doe
+    true,  -- notifications
+    false, -- email_updates
+    true,  -- share_location
+    true,  -- public_profile
+    false  -- auto_accept_requests
+),
+(
+    '3273f6e2-059f-4c7b-8bc8-fa675c6ac46b', -- Marie Dupont
+    true,  -- notifications
+    true,  -- email_updates (she likes to stay informed)
+    true,  -- share_location
+    true,  -- public_profile
+    false  -- auto_accept_requests
+),
+(
+    '44e6bc46-a589-4476-9472-d53980d5ea61', -- Peter Schmidt
+    false, -- notifications (prefers quiet)
+    false, -- email_updates
+    true,  -- share_location
+    true,  -- public_profile
+    true   -- auto_accept_requests (trusting person)
+);
+
 -- Verify data integrity
 -- Check that we have the expected number of records
 DO $$
@@ -155,15 +188,18 @@ DECLARE
     user_count INTEGER;
     item_count INTEGER;
     request_count INTEGER;
+    preferences_count INTEGER;
 BEGIN
     SELECT COUNT(*) INTO user_count FROM users;
     SELECT COUNT(*) INTO item_count FROM items;
     SELECT COUNT(*) INTO request_count FROM borrow_requests;
+    SELECT COUNT(*) INTO preferences_count FROM user_preferences;
     
     RAISE NOTICE 'Seed data loaded successfully:';
     RAISE NOTICE '  Users: %', user_count;
     RAISE NOTICE '  Items: %', item_count;
     RAISE NOTICE '  Requests: %', request_count;
+    RAISE NOTICE '  Preferences: %', preferences_count;
     
     -- Basic integrity checks
     IF user_count != 3 THEN
@@ -172,6 +208,10 @@ BEGIN
     
     IF item_count != 5 THEN
         RAISE EXCEPTION 'Expected 5 items, got %', item_count;
+    END IF;
+    
+    IF preferences_count != 3 THEN
+        RAISE EXCEPTION 'Expected 3 user preferences, got %', preferences_count;
     END IF;
     
     RAISE NOTICE 'All integrity checks passed! 🎉';

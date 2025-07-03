@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
   ScrollView, 
@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   View, 
   Alert, 
-  Image 
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -14,6 +15,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { LanguageSelector } from '@/components/LanguageSelectorV2';
 import { useLanguage } from '@/contexts/LanguageContextV2';
+import { useAuth } from '@/contexts/AuthContext';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -23,19 +25,19 @@ export default function SettingsScreen() {
   const gray = createGrayHelper(colors);
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
+  const { userProfile, userPreferences, updateProfile, updatePreferences, loading } = useAuth();
 
-  // User profile state
-  const [userProfile, setUserProfile] = useState({
-    name: 'Marco Rossi',
-    email: 'marco.rossi@email.com',
-    phone: '+39 123 456 7890',
-    address: 'Via Roma 123, 00100 Roma, Italy',
-    avatar: 'https://via.placeholder.com/120x120?text=MR',
-    bio: 'Passionate about sharing and helping neighbors'
+  // Local editing state
+  const [editingProfile, setEditingProfile] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    avatar: '',
+    bio: ''
   });
 
-  // App preferences state
-  const [preferences, setPreferences] = useState({
+  const [editingPreferences, setEditingPreferences] = useState({
     notifications: true,
     emailUpdates: false,
     shareLocation: true,
@@ -45,12 +47,70 @@ export default function SettingsScreen() {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const handleSave = () => {
-    Alert.alert(
-      t('action.save'),
-      t('success.profile_updated') || 'Profile updated successfully!',
-      [{ text: 'OK', onPress: () => setIsEditing(false) }]
-    );
+  // Update local state when profile/preferences change
+  useEffect(() => {
+    if (userProfile) {
+      setEditingProfile({
+        name: userProfile.name || '',
+        email: userProfile.email || '',
+        phone: userProfile.phone || '',
+        address: userProfile.address || '',
+        avatar: userProfile.avatar || 'https://via.placeholder.com/120x120?text=' + (userProfile.name?.charAt(0) || 'U'),
+        bio: userProfile.bio || ''
+      });
+    }
+  }, [userProfile]);
+
+  useEffect(() => {
+    if (userPreferences) {
+      setEditingPreferences({
+        notifications: userPreferences.notifications,
+        emailUpdates: userPreferences.emailUpdates,
+        shareLocation: userPreferences.shareLocation,
+        autoAcceptRequests: userPreferences.autoAcceptRequests,
+        publicProfile: userPreferences.publicProfile
+      });
+    }
+  }, [userPreferences]);
+
+  const handleSave = async () => {
+    try {
+      // Save profile changes
+      if (userProfile) {
+        const profileUpdates = {
+          name: editingProfile.name,
+          email: editingProfile.email, 
+          phone: editingProfile.phone,
+          address: editingProfile.address,
+          avatar: editingProfile.avatar,
+          bio: editingProfile.bio
+        };
+
+        const profileResult = await updateProfile(profileUpdates);
+        if (profileResult.error) {
+          Alert.alert('Error', profileResult.error);
+          return;
+        }
+      }
+
+      // Save preferences changes
+      if (userPreferences) {
+        const preferencesResult = await updatePreferences(editingPreferences);
+        if (preferencesResult.error) {
+          Alert.alert('Error', preferencesResult.error);
+          return;
+        }
+      }
+
+      Alert.alert(
+        t('action.save'),
+        t('success.profile_updated') || 'Profile updated successfully!',
+        [{ text: 'OK', onPress: () => setIsEditing(false) }]
+      );
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      Alert.alert('Error', 'Failed to save changes. Please try again.');
+    }
   };
 
   const handleImagePicker = () => {
@@ -65,8 +125,8 @@ export default function SettingsScreen() {
     );
   };
 
-  const togglePreference = (key: keyof typeof preferences) => {
-    setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
+  const togglePreference = (key: keyof typeof editingPreferences) => {
+    setEditingPreferences(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const renderSection = (title: string, children: React.ReactNode) => (
@@ -140,6 +200,41 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
+  // Show loading state if still loading
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <ThemedText style={{ marginTop: 16, color: colors.text }}>
+          {t('loading') || 'Loading...'}
+        </ThemedText>
+      </View>
+    );
+  }
+
+  // Show authentication required if no user profile
+  if (!userProfile) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top, justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <IconSymbol name="person.circle" size={64} color={gray[400]} />
+        <ThemedText style={{ marginTop: 16, color: colors.text, fontSize: 18, fontWeight: '600', textAlign: 'center' }}>
+          {t('auth.login_required') || 'Authentication Required'}
+        </ThemedText>
+        <ThemedText style={{ marginTop: 8, color: gray[500], textAlign: 'center', lineHeight: 20 }}>
+          {t('auth.login_to_access_settings') || 'Please log in to access your settings and profile information.'}
+        </ThemedText>
+        <TouchableOpacity 
+          style={[styles.loginButton, { backgroundColor: colors.primary, marginTop: 24 }]}
+          onPress={() => router.push('/auth-demo')}
+        >
+          <ThemedText style={[styles.loginButtonText, { color: 'white' }]}>
+            {t('auth.go_to_login') || 'Go to Authentication'}
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       {/* Header */}
@@ -166,7 +261,7 @@ export default function SettingsScreen() {
               style={styles.avatarContainer} 
               onPress={isEditing ? handleImagePicker : undefined}
             >
-              <Image source={{ uri: userProfile.avatar }} style={styles.avatar} />
+              <Image source={{ uri: editingProfile.avatar }} style={styles.avatar} />
               {isEditing && (
                 <View style={[styles.avatarOverlay, { backgroundColor: colors.primary }]}>
                   <IconSymbol name="camera.fill" size={20} color="white" />
@@ -177,36 +272,36 @@ export default function SettingsScreen() {
             {/* Profile Fields */}
             {renderInputField(
               t('profile.name') || 'Name',
-              userProfile.name,
-              (text) => setUserProfile(prev => ({ ...prev, name: text })),
+              editingProfile.name,
+              (text) => setEditingProfile(prev => ({ ...prev, name: text })),
               t('profile.name_placeholder') || 'Enter your name'
             )}
 
             {renderInputField(
               t('profile.email') || 'Email',
-              userProfile.email,
-              (text) => setUserProfile(prev => ({ ...prev, email: text })),
+              editingProfile.email,
+              (text) => setEditingProfile(prev => ({ ...prev, email: text })),
               t('profile.email_placeholder') || 'Enter your email'
             )}
 
             {renderInputField(
               t('profile.phone') || 'Phone',
-              userProfile.phone,
-              (text) => setUserProfile(prev => ({ ...prev, phone: text })),
+              editingProfile.phone,
+              (text) => setEditingProfile(prev => ({ ...prev, phone: text })),
               t('profile.phone_placeholder') || 'Enter your phone number'
             )}
 
             {renderInputField(
               t('profile.address') || 'Address',
-              userProfile.address,
-              (text) => setUserProfile(prev => ({ ...prev, address: text })),
+              editingProfile.address,
+              (text) => setEditingProfile(prev => ({ ...prev, address: text })),
               t('profile.address_placeholder') || 'Enter your address'
             )}
 
             {renderInputField(
               t('profile.bio') || 'Bio',
-              userProfile.bio,
-              (text) => setUserProfile(prev => ({ ...prev, bio: text })),
+              editingProfile.bio,
+              (text) => setEditingProfile(prev => ({ ...prev, bio: text })),
               t('profile.bio_placeholder') || 'Tell us about yourself',
               true
             )}
@@ -224,14 +319,14 @@ export default function SettingsScreen() {
             {renderToggleOption(
               t('settings.push_notifications') || 'Push Notifications',
               t('settings.push_description') || 'Receive notifications about borrow requests',
-              preferences.notifications,
+              editingPreferences.notifications,
               () => togglePreference('notifications')
             )}
             
             {renderToggleOption(
               t('settings.email_updates') || 'Email Updates',
               t('settings.email_description') || 'Get weekly updates via email',
-              preferences.emailUpdates,
+              editingPreferences.emailUpdates,
               () => togglePreference('emailUpdates')
             )}
           </>
@@ -243,21 +338,21 @@ export default function SettingsScreen() {
             {renderToggleOption(
               t('settings.share_location') || 'Share Location',
               t('settings.location_description') || 'Allow neighbors to see your approximate location',
-              preferences.shareLocation,
+              editingPreferences.shareLocation,
               () => togglePreference('shareLocation')
             )}
 
             {renderToggleOption(
               t('settings.public_profile') || 'Public Profile',
               t('settings.profile_description') || 'Make your profile visible to other users',
-              preferences.publicProfile,
+              editingPreferences.publicProfile,
               () => togglePreference('publicProfile')
             )}
 
             {renderToggleOption(
               t('settings.auto_accept') || 'Auto-accept Requests',
               t('settings.auto_description') || 'Automatically approve borrow requests',
-              preferences.autoAcceptRequests,
+              editingPreferences.autoAcceptRequests,
               () => togglePreference('autoAcceptRequests')
             )}
           </>
@@ -478,5 +573,15 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  loginButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  loginButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

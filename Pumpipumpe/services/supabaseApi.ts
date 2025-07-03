@@ -30,6 +30,9 @@ function transformDbUserToUser(dbUser: any): User {
     id: dbUser.id,
     name: dbUser.name,
     email: dbUser.email,
+    phone: dbUser.phone,
+    avatar: dbUser.avatar,
+    bio: dbUser.bio,
     location: {
       latitude: 0, // PostGIS data would need special parsing
       longitude: 0,
@@ -106,9 +109,12 @@ export const supabaseApi = {
 
   async createItem(itemData: Omit<Item, 'id' | 'owner' | 'createdAt' | 'updatedAt'>): Promise<Item> {
     try {
-      // Get current user - for now we'll use the first user from our sample data
-      // In a real app, this would come from the auth context
+      // Get current user
       const currentUser = await this.getCurrentUser();
+      
+      if (!currentUser) {
+        throw new Error('User must be authenticated to create items');
+      }
       
       const newItem = {
         title: itemData.title,
@@ -222,47 +228,32 @@ export const supabaseApi = {
     return this.getItems({ query });
   },
 
-  async getCurrentUser(): Promise<User> {
+  async getCurrentUser(): Promise<User | null> {
     try {
-      // For now, return the first user from our sample data
-      // In a real app, this would get the authenticated user
+      // Get the currently authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        console.log('No authenticated user found');
+        return null;
+      }
+
+      // Get the user profile from our users table
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .limit(1)
+        .eq('auth_id', user.id)
         .single();
 
       if (error || !data) {
-        // Fallback: create or return a default user
-        console.warn('No user found, using fallback user');
-        return {
-          id: 'e3de7cf1-a7cb-4826-8cc6-02a3963d7629', // John Doe's ID from our sample data
-          name: 'John Doe',
-          email: 'john@example.com',
-          location: {
-            latitude: 46.5197,
-            longitude: 6.6323,
-            address: 'Rue de la Paix 15, 1003 Lausanne'
-          },
-          createdAt: new Date()
-        };
+        console.error('User profile not found in database for auth user:', user.id);
+        return null;
       }
 
       return transformDbUserToUser(data);
     } catch (error) {
       console.error('Error in getCurrentUser:', error);
-      // Return fallback user
-      return {
-        id: 'e3de7cf1-a7cb-4826-8cc6-02a3963d7629',
-        name: 'John Doe',
-        email: 'john@example.com',
-        location: {
-          latitude: 46.5197,
-          longitude: 6.6323,
-          address: 'Rue de la Paix 15, 1003 Lausanne'
-        },
-        createdAt: new Date()
-      };
+      return null;
     }
   },
 

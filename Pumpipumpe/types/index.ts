@@ -2,13 +2,27 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   avatar?: string;
+  bio?: string;
   location: {
     latitude: number;
     longitude: number;
     address: string;
   };
   createdAt: Date;
+}
+
+export interface UserPreferences {
+  id: string;
+  userId: string;
+  notifications: boolean;
+  emailUpdates: boolean;
+  shareLocation: boolean;
+  publicProfile: boolean;
+  autoAcceptRequests: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Item {

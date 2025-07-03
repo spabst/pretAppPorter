@@ -25,9 +25,11 @@ export interface Database {
           name: string;
           email: string;
           avatar: string | null;
+          bio: string | null;
           location: unknown; // PostGIS geography point
           address: string;
           phone: string | null;
+          auth_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -36,9 +38,11 @@ export interface Database {
           name: string;
           email: string;
           avatar?: string | null;
+          bio?: string | null;
           location: unknown;
           address: string;
           phone?: string | null;
+          auth_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -47,9 +51,45 @@ export interface Database {
           name?: string;
           email?: string;
           avatar?: string | null;
+          bio?: string | null;
           location?: unknown;
           address?: string;
           phone?: string | null;
+          auth_id?: string | null;
+          updated_at?: string;
+        };
+      };
+      user_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          notifications: boolean;
+          email_updates: boolean;
+          share_location: boolean;
+          public_profile: boolean;
+          auto_accept_requests: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          notifications?: boolean;
+          email_updates?: boolean;
+          share_location?: boolean;
+          public_profile?: boolean;
+          auto_accept_requests?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          notifications?: boolean;
+          email_updates?: boolean;
+          share_location?: boolean;
+          public_profile?: boolean;
+          auto_accept_requests?: boolean;
           updated_at?: string;
         };
       };
