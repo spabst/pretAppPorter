@@ -3,10 +3,46 @@ import { createClient } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+// Environment detection
+const isDevelopment = __DEV__;
+const isLocalhost = process.env.EXPO_PUBLIC_SUPABASE_URL?.includes('127.0.0.1') || 
+                   process.env.EXPO_PUBLIC_SUPABASE_URL?.includes('localhost');
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Environment-specific configuration
+const getSupabaseConfig = () => {
+  if (isDevelopment && isLocalhost) {
+    // Local development
+    return {
+      url: process.env.EXPO_PUBLIC_SUPABASE_URL!,
+      anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+      environment: 'development' as const
+    };
+  } else {
+    // Production or staging
+    return {
+      url: process.env.EXPO_PUBLIC_SUPABASE_URL!,
+      anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+      environment: 'production' as const
+    };
+  }
+};
+
+const config = getSupabaseConfig();
+
+// Validate required environment variables
+if (!config.url || !config.anonKey) {
+  throw new Error(
+    `Missing Supabase configuration for ${config.environment} environment. ` +
+    'Please check your .env file and ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set.'
+  );
+}
+
+console.log(`🔧 Supabase initialized in ${config.environment} mode:`, {
+  url: config.url,
+  anonKey: config.anonKey.substring(0, 20) + '...'
+});
+
+export const supabase = createClient(config.url, config.anonKey, {
   auth: {
     storage: Platform.OS !== 'web' ? AsyncStorage : undefined,
     autoRefreshToken: true,
@@ -14,6 +50,14 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: Platform.OS === 'web',
   },
 });
+
+// Export environment info for use in other parts of the app
+export const environment = {
+  isDevelopment,
+  isLocalhost,
+  mode: config.environment,
+  supabaseUrl: config.url
+};
 
 // Database Types (based on your existing TypeScript interfaces)
 export interface Database {

@@ -3,6 +3,7 @@
 -- Description: Sample users and items for consistent development experience
 
 -- Insert sample users with locations in Switzerland
+-- Note: auth_id will be set by the auth user migration (20250703000002_create_dev_auth_users.sql)
 INSERT INTO users (id, email, name, phone, address, location, bio, avatar) VALUES
 (
     'e3de7cf1-a7cb-4826-8cc6-02a3963d7629',

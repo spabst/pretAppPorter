@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useLanguage } from '@/contexts/LanguageContextV2';
 import { useAuth } from '@/contexts/AuthContext';
+import { environment } from '@/lib/supabase';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -68,6 +69,24 @@ export default function AuthDemoScreen() {
           Test the complete registration and login workflows with validation
         </ThemedText>
 
+        {/* Environment Info */}
+        <View style={[styles.environmentCard, { 
+          backgroundColor: environment.isDevelopment ? '#FEF3C7' : '#DCFCE7',
+          borderColor: environment.isDevelopment ? '#F59E0B' : '#22C55E'
+        }]}>
+          <IconSymbol 
+            name={environment.isDevelopment ? "wrench.and.screwdriver" : "globe"} 
+            size={16} 
+            color={environment.isDevelopment ? '#F59E0B' : '#22C55E'} 
+          />
+          <ThemedText style={[styles.environmentText, { 
+            color: environment.isDevelopment ? '#92400E' : '#15803D'
+          }]}>
+            {environment.isDevelopment ? '🛠️ Development Mode' : '🌍 Production Mode'} 
+            {environment.isLocalhost && ' (Local Supabase)'}
+          </ThemedText>
+        </View>
+
         {/* Current Auth Status */}
         {user && userProfile ? (
           <View style={[styles.statusCard, { backgroundColor: '#DCFCE7', borderColor: '#22C55E' }]}>
@@ -95,8 +114,8 @@ export default function AuthDemoScreen() {
           </ThemedText>
         </TouchableOpacity>
 
-        {/* Quick Dev Login Button */}
-        {!user && (
+        {/* Quick Dev Login Button - Only show in development */}
+        {!user && environment.isDevelopment && environment.isLocalhost && (
           <TouchableOpacity
             style={[styles.button, { backgroundColor: '#8B5CF6' }]}
             onPress={quickDevLogin}
@@ -297,6 +316,20 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
+    fontWeight: '500',
+  },
+  environmentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 8,
+    width: '100%',
+  },
+  environmentText: {
+    fontSize: 12,
     fontWeight: '500',
   },
 });
