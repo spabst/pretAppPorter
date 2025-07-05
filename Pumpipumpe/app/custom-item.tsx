@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, View, Alert, TextInput, ScrollView } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Alert, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Toast } from '@/components/Toast';
 import { supabaseApi } from '@/services/supabaseApi';
 import { ItemCategory, ItemCondition } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
@@ -51,6 +52,10 @@ export default function CustomItemScreen() {
   const [category, setCategory] = useState<ItemCategory>(ItemCategory.OTHER);
   const [condition, setCondition] = useState<ItemCondition>(ItemCondition.GOOD);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   // Pre-fill form if coming from suggested items
   useEffect(() => {
@@ -67,9 +72,11 @@ export default function CustomItemScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert(t('error.generic'), 'Inserisci un titolo per il tuo oggetto');
+      Alert.alert(t('error.generic'), t('form.title') + ' is required');
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const itemData = {
@@ -83,11 +90,24 @@ export default function CustomItemScreen() {
       };
 
       await supabaseApi.createItem(itemData);
-      Alert.alert('Successo', t('success.item_added'), [
-        { text: 'OK', onPress: () => router.dismiss() }
-      ]);
-    } catch {
-      Alert.alert(t('error.generic'), 'Impossibile salvare l\'oggetto');
+      
+      // Show success toast
+      setToastMessage(t('success.item_added'));
+      setToastType('success');
+      setShowToast(true);
+      
+      // Navigate to home after a short delay
+      setTimeout(() => {
+        router.dismissAll();
+        router.replace('/(tabs)');
+      }, 1500);
+    } catch (error) {
+      console.error('Error creating item:', error);
+      setToastMessage('Unable to save your item. Please check your connection and try again.');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -106,9 +126,22 @@ export default function CustomItemScreen() {
         </ThemedText>
         <TouchableOpacity 
           onPress={handleSave}
-          style={[styles.saveButtonContainer, { backgroundColor: colors.primary }]}
+          disabled={isLoading}
+          style={[
+            styles.saveButtonContainer, 
+            { 
+              backgroundColor: isLoading ? gray[300] : colors.primary,
+              opacity: isLoading ? 0.7 : 1
+            }
+          ]}
         >
-          <ThemedText style={[styles.saveButton, { color: 'white' }]}>{t('action.save')}</ThemedText>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <ThemedText style={[styles.saveButton, { color: 'white' }]}>
+              {t('action.save')}
+            </ThemedText>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -216,6 +249,13 @@ export default function CustomItemScreen() {
 
         <View style={styles.bottomPadding} />
       </ScrollView>
+      
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        visible={showToast}
+        onHide={() => setShowToast(false)}
+      />
     </View>
   );
 }

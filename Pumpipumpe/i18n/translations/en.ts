@@ -24,6 +24,7 @@ export const en = {
   'action.cancel': 'Cancel',
   'action.edit': 'Edit',
   'action.continue': 'Continue',
+  'action.skip': 'Skip',
   
   // Form labels
   'form.title': 'Title',
@@ -133,5 +134,9 @@ export const en = {
   'auth.forgot_password': 'Forgot password?',
   'auth.sign_in': 'Sign In',
   'auth.no_account': 'Don\'t have an account? ',
-  'auth.sign_up': 'Sign up'
+  'auth.sign_up': 'Sign up',
+  'auth.login_required': 'Authentication Required',
+  'auth.login_to_access_settings': 'Please log in to access your settings',
+  'auth.go_to_login': 'Go to Login',
+  'auth.contacts_optional_desc': 'You can disable contact access anytime in settings'
 } as const;
