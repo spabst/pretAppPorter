@@ -133,5 +133,26 @@ export const it = {
   'auth.forgot_password': 'Password dimenticata?',
   'auth.sign_in': 'Accedi',
   'auth.no_account': 'Non hai un account? ',
-  'auth.sign_up': 'Registrati'
+  'auth.sign_up': 'Registrati',
+  'auth.login_required': 'Autenticazione Richiesta',
+  'auth.login_to_access_settings': 'Effettua il login per accedere alle impostazioni',
+  'auth.go_to_login': 'Vai al Login',
+  'auth.contacts_optional_desc': 'Puoi disabilitare l\'accesso ai contatti in qualsiasi momento nelle impostazioni',
+  
+  // My Items screen
+  'items.my_items': 'I Miei Oggetti',
+  'items.add_item': 'Aggiungi Oggetto',
+  'items.no_items': 'Nessun oggetto',
+  'items.no_items_desc': 'Aggiungi il tuo primo oggetto per iniziare a condividere!',
+  'items.add_first_item': 'Aggiungi Oggetto',
+  'items.by_you': 'Da te',
+  'items.delete_confirm': 'Elimina Oggetto',
+  'items.delete_message': 'Sei sicuro di voler eliminare',
+  'items.deleting': 'Eliminazione...',
+  'success.item_deleted': 'Oggetto eliminato con successo',
+  'success.item_updated': 'Oggetto aggiornato con successo',
+  'error.delete_failed': 'Impossibile eliminare l\'oggetto',
+  'error.update_failed': 'Impossibile aggiornare l\'oggetto',
+  'error.load_items_failed': 'Impossibile caricare i tuoi oggetti',
+  'action.skip': 'Salta'
 } as const;

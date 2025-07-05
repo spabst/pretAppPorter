@@ -1,9 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated, Dimensions } from 'react-native';
+import React, { useEffect, useRef, useCallback } from 'react';
+import { StyleSheet, Animated } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { IconSymbol } from './ui/IconSymbol';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
 
 interface ToastProps {
   message: string;
@@ -14,9 +12,17 @@ interface ToastProps {
 }
 
 export function Toast({ message, type = 'success', visible, onHide, duration = 3000 }: ToastProps) {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
   const slideAnim = useRef(new Animated.Value(-100)).current;
+
+  const hideToast = useCallback(() => {
+    Animated.timing(slideAnim, {
+      toValue: -100,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      onHide();
+    });
+  }, [slideAnim, onHide]);
 
   useEffect(() => {
     if (visible) {
@@ -35,17 +41,7 @@ export function Toast({ message, type = 'success', visible, onHide, duration = 3
 
       return () => clearTimeout(timer);
     }
-  }, [visible]);
-
-  const hideToast = () => {
-    Animated.timing(slideAnim, {
-      toValue: -100,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      onHide();
-    });
-  };
+  }, [visible, duration, hideToast, slideAnim]);
 
   const getToastColor = () => {
     switch (type) {
@@ -90,8 +86,6 @@ export function Toast({ message, type = 'success', visible, onHide, duration = 3
     </Animated.View>
   );
 }
-
-const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {

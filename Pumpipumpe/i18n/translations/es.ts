@@ -23,6 +23,8 @@ export const es = {
   'action.save': 'Guardar',
   'action.cancel': 'Cancelar',
   'action.edit': 'Editar',
+  'action.continue': 'Continuar',
+  'action.skip': 'Omitir',
   
   // Form labels
   'form.title': 'Título',

@@ -23,6 +23,8 @@ export const de = {
   'action.save': 'Speichern',
   'action.cancel': 'Abbrechen',
   'action.edit': 'Bearbeiten',
+  'action.continue': 'Weiter',
+  'action.skip': 'Überspringen',
   
   // Form labels
   'form.title': 'Titel',

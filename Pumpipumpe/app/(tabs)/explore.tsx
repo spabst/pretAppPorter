@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, TouchableOpacity, View, Alert, Modal, TextInput, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, FlatList, TouchableOpacity, View, Modal, TextInput, ScrollView, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
@@ -37,18 +37,7 @@ export default function MyItemsScreen() {
   const [condition, setCondition] = useState<ItemCondition>(ItemCondition.GOOD);
   const [isAvailable, setIsAvailable] = useState(true);
 
-  useEffect(() => {
-    loadUserItems();
-  }, []);
-
-  // Reload items when screen comes into focus (after adding new item)
-  useFocusEffect(
-    React.useCallback(() => {
-      loadUserItems();
-    }, [])
-  );
-
-  const loadUserItems = async () => {
+  const loadUserItems = useCallback(async () => {
     try {
       setLoading(true);
       const currentUser = await supabaseApi.getCurrentUser();
@@ -67,13 +56,24 @@ export default function MyItemsScreen() {
       setItems(data);
     } catch (error) {
       console.error('Error loading user items:', error);
-      setToastMessage(t('error.load_items_failed'));
+      setToastMessage('Failed to load your items');
       setToastType('error');
       setShowToast(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUserItems();
+  }, [loadUserItems]);
+
+  // Reload items when screen comes into focus (after adding new item)
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserItems();
+    }, [loadUserItems])
+  );
 
   const openAddModal = () => {
     router.push('/add-item');
@@ -100,7 +100,9 @@ export default function MyItemsScreen() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a title');
+      setToastMessage('Please enter a title');
+      setToastType('error');
+      setShowToast(true);
       return;
     }
 
@@ -402,14 +404,14 @@ export default function MyItemsScreen() {
                 Delete Item
               </ThemedText>
               <ThemedText style={[styles.deleteModalMessage, { color: gray[600] }]}>
-                Are you sure you want to delete "{itemToDelete?.title}"? This action cannot be undone.
+                Are you sure you want to delete &ldquo;{itemToDelete?.title}&rdquo;? This action cannot be undone.
               </ThemedText>
             </View>
             
             <View style={styles.deleteModalActions}>
               <TouchableOpacity
                 onPress={cancelDelete}
-                style={[styles.deleteModalButton, styles.cancelButton, { backgroundColor: gray[200] }]}
+                style={[styles.deleteModalButton, { backgroundColor: gray[200] }]}
               >
                 <ThemedText style={[styles.deleteModalButtonText, { color: gray[700] }]}>
                   Cancel
@@ -418,7 +420,7 @@ export default function MyItemsScreen() {
               
               <TouchableOpacity
                 onPress={confirmDelete}
-                style={[styles.deleteModalButton, styles.deleteButton, { backgroundColor: '#EF4444' }]}
+                style={[styles.deleteModalButton, { backgroundColor: '#EF4444' }]}
               >
                 <ThemedText style={[styles.deleteModalButtonText, { color: 'white' }]}>
                   Delete
@@ -587,7 +589,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cancelButton: {
-    fontSize: 16,
+    // Additional cancel button styles if needed
   },
   saveButton: {
     fontSize: 16,
