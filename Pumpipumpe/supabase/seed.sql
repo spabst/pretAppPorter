@@ -216,4 +216,15 @@ BEGIN
     END IF;
     
     RAISE NOTICE 'All integrity checks passed! 🎉';
+    
+    -- Instructions for creating auth users
+    RAISE NOTICE '';
+    RAISE NOTICE '🔗 NEXT STEP: Create development auth users';
+    RAISE NOTICE '   Run: node create-dev-auth.js';
+    RAISE NOTICE '   Or: node supabase/seed_auth_users.js';
+    RAISE NOTICE '';
+    RAISE NOTICE '🔑 Dev login credentials:';
+    RAISE NOTICE '   Email: john@example.com';
+    RAISE NOTICE '   Password: password123';
+    RAISE NOTICE '';
 END $$;

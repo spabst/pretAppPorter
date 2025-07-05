@@ -27,10 +27,11 @@ Pumpipumpe is a React Native mobile app built with Expo that enables neighbors t
 - Item browsing with 53 predefined items
 - **Authentication Context & Route Protection**
 - Comprehensive testing infrastructure
+- **Persistent Development Auth System** (auto-recreates after resets)
 
 🚧 **Current State:**
 - **Authentication**: REAL Supabase Auth (Phase 1 ✅)
-- **Database**: Schema ready, needs setup (5 min task)
+- **Database**: Complete with persistent schema and seed data
 - **Data**: Still mock in UI, backend ready for migration
 - **MVP Status**: Phase 1 complete, Phase 2 ready to start
 
@@ -49,6 +50,12 @@ npm run typecheck
 
 # Linting (if available)
 npm run lint
+
+# Database management
+npm run db:reset        # Reset database with migrations and seeds
+npm run db:setup        # Create development auth users
+npm run db:reset-dev    # Complete reset: database + auth users
+npm run db:test         # Test auth and database connectivity
 ```
 
 ### Testing Access
@@ -66,14 +73,22 @@ Navigate to: **Settings Tab → About Section → 🧪 Test Authentication**
 - **Database**: Complete PostGIS schema with geolocation support
 - **Infrastructure**: AuthContext, route protection, session management
 - **Security**: Row Level Security, environment protection
+- **Persistent Development Auth**: Auto-recreates dev users after database resets
 - Built scalable internationalization architecture
 - Enhanced navigation with better back button visibility
 - Established comprehensive project documentation
 
-### **IMMEDIATE TASKS (Before Next Development Session)**
-1. **Database Setup** (5 min): Run `/database/schema.sql` in Supabase SQL Editor
-2. **Environment Config** (2 min): Update `.env` with real Supabase credentials
-3. **Test Auth** (5 min): Verify registration and login work
+### **READY FOR DEVELOPMENT**
+✅ **Setup Complete**: Database schema, seed data, and persistent auth system ready
+✅ **Quick Start**: Run `npm run db:reset-dev` to reset everything or `npm run db:setup` to create auth users
+✅ **Test Authentication**: Login with `john@example.com` / `password123` or use Quick Dev Login
+
+### **Development Auth System**
+- **Schema & Seed Data**: Persist automatically across database resets
+- **Auth Users**: Need to be recreated after each `supabase db reset`
+- **One-Command Reset**: `npm run db:reset-dev` handles everything
+- **Manual Setup**: `npm run db:setup` creates auth users after reset
+- **Testing**: `npm run db:test` verifies complete auth flow
 
 ### Next Development Session (Phase 2)
 - Implement real item CRUD operations

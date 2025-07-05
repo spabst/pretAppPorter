@@ -12,7 +12,11 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:reset": "npx supabase db reset",
+    "db:setup": "node create-dev-auth.js",
+    "db:reset-dev": "./dev-reset.sh",
+    "db:test": "node test-persistent-auth.js"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
