@@ -5,20 +5,30 @@ import { Image } from 'expo-image';
 import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { Toast } from '@/components/Toast';
 import { supabaseApi } from '@/services/supabaseApi';
 import { Item, ItemCategory, ItemCondition } from '@/types';
 import { Colors, createGrayHelper } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { useLanguage } from '@/contexts/LanguageContextV2';
 
 export default function MyItemsScreen() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [user, setUser] = useState<any>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const gray = createGrayHelper(colors);
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
 
   // Form state
   const [title, setTitle] = useState('');
@@ -41,11 +51,25 @@ export default function MyItemsScreen() {
   const loadUserItems = async () => {
     try {
       setLoading(true);
-      const user = await supabaseApi.getCurrentUser();
-      const data = await supabaseApi.getUserItems(user.id);
+      const currentUser = await supabaseApi.getCurrentUser();
+      
+      if (!currentUser) {
+        console.log('No authenticated user found');
+        setUser(null);
+        setItems([]);
+        return;
+      }
+      
+      setUser(currentUser);
+      console.log('Loading items for user:', currentUser.id);
+      const data = await supabaseApi.getUserItems(currentUser.id);
+      console.log('Loaded items:', data);
       setItems(data);
-    } catch {
-      Alert.alert('Error', 'Failed to load your items');
+    } catch (error) {
+      console.error('Error loading user items:', error);
+      setToastMessage(t('error.load_items_failed'));
+      setToastType('error');
+      setShowToast(true);
     } finally {
       setLoading(false);
     }
@@ -100,33 +124,59 @@ export default function MyItemsScreen() {
       setShowAddModal(false);
       resetForm();
       loadUserItems();
-      Alert.alert('Success', editingItem ? 'Item updated!' : 'Item added!');
+      setToastMessage(editingItem ? t('success.item_updated') : t('success.item_added'));
+      setToastType('success');
+      setShowToast(true);
     } catch {
-      Alert.alert('Error', 'Failed to save item');
+      setToastMessage(editingItem ? t('error.update_failed') : 'Failed to save item');
+      setToastType('error');
+      setShowToast(true);
     }
   };
 
   const handleDelete = (item: Item) => {
-    Alert.alert(
-      'Delete Item',
-      `Are you sure you want to delete "${item.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await supabaseApi.deleteItem(item.id);
-              loadUserItems();
-              Alert.alert('Success', 'Item deleted');
-            } catch {
-              Alert.alert('Error', 'Failed to delete item');
-            }
-          }
-        }
-      ]
-    );
+    console.log('Delete button tapped for item:', item.title, item.id);
+    setItemToDelete(item);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    
+    console.log('Delete confirmed, starting deletion...');
+    setIsDeleting(itemToDelete.id);
+    setShowDeleteModal(false);
+    
+    try {
+      console.log('Calling supabaseApi.deleteItem with id:', itemToDelete.id);
+      const result = await supabaseApi.deleteItem(itemToDelete.id);
+      console.log('Delete result:', result);
+      
+      if (result === false) {
+        throw new Error('Delete returned false');
+      }
+      
+      console.log('Reloading user items...');
+      loadUserItems();
+      setToastMessage('Item deleted successfully');
+      setToastType('success');
+      setShowToast(true);
+      console.log('Delete successful!');
+    } catch (error) {
+      console.error('Delete failed:', error);
+      setToastMessage('Failed to delete item');
+      setToastType('error');
+      setShowToast(true);
+    } finally {
+      setIsDeleting(null);
+      setItemToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    console.log('Delete cancelled');
+    setShowDeleteModal(false);
+    setItemToDelete(null);
   };
 
   const renderItem = ({ item }: { item: Item }) => (
@@ -134,21 +184,47 @@ export default function MyItemsScreen() {
       <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
       <View style={styles.itemInfo}>
         <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
-        <ThemedText style={[styles.itemOwner, { color: gray[500] }]}>Da te</ThemedText>
+        <ThemedText style={[styles.itemOwner, { color: gray[500] }]}>{t('items.by_you')}</ThemedText>
         <View style={styles.itemMeta}>
           <View style={[styles.statusBadge, item.isAvailable ? styles.availableBadge : styles.unavailableBadge]}>
             <ThemedText style={[styles.statusText, { color: item.isAvailable ? '#22C55E' : '#EF4444' }]}>
-              {item.isAvailable ? 'Disponibile' : 'Non disponibile'}
+              {item.isAvailable ? t('items.available') : t('items.not_available')}
             </ThemedText>
           </View>
         </View>
       </View>
       <View style={styles.itemActions}>
-        <TouchableOpacity onPress={() => openEditModal(item)} style={styles.actionButton}>
-          <IconSymbol name="pencil" size={20} color={gray[500]} />
+        <TouchableOpacity 
+          onPress={() => openEditModal(item)} 
+          style={[styles.actionButton, { backgroundColor: '#3B82F6' }]}
+        >
+          <IconSymbol name="pencil" size={16} color="white" />
+          <ThemedText style={styles.actionButtonText}>Edit</ThemedText>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleDelete(item)} style={styles.actionButton}>
-          <IconSymbol name="trash" size={20} color="#EF4444" />
+        <TouchableOpacity 
+          onPress={() => {
+            console.log('DELETE BUTTON PRESSED!');
+            handleDelete(item);
+          }} 
+          disabled={isDeleting === item.id}
+          style={[
+            styles.actionButton, 
+            { backgroundColor: isDeleting === item.id ? '#FCA5A5' : '#EF4444' },
+            isDeleting === item.id && { opacity: 0.7 }
+          ]}
+          activeOpacity={0.7}
+        >
+          {isDeleting === item.id ? (
+            <>
+              <IconSymbol name="hourglass" size={16} color="white" />
+              <ThemedText style={styles.actionButtonText}>Deleting...</ThemedText>
+            </>
+          ) : (
+            <>
+              <IconSymbol name="trash" size={16} color="white" />
+              <ThemedText style={styles.actionButtonText}>Delete</ThemedText>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -157,30 +233,46 @@ export default function MyItemsScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <ThemedText style={[styles.title, { color: colors.text }]}>I Miei Oggetti</ThemedText>
+        <ThemedText style={[styles.title, { color: colors.text }]}>{t('items.my_items')}</ThemedText>
         <TouchableOpacity onPress={openAddModal} style={[styles.addButton, { backgroundColor: colors.primary }]}>
           <IconSymbol name="plus" size={20} color="white" />
-          <ThemedText style={styles.addButtonText}>Aggiungi</ThemedText>
+          <ThemedText style={styles.addButtonText}>{t('items.add_item')}</ThemedText>
         </TouchableOpacity>
       </View>
 
       {loading ? (
         <View style={styles.centered}>
-          <ThemedText style={{ color: colors.text }}>Caricamento...</ThemedText>
+          <ThemedText style={{ color: colors.text }}>{t('loading')}</ThemedText>
+        </View>
+      ) : !user ? (
+        <View style={styles.centered}>
+          <View style={[styles.emptyContainer, { backgroundColor: colors.card }]}>
+            <IconSymbol name="person.circle" size={64} color={gray[300]} />
+            <ThemedText style={[styles.emptyText, { color: colors.text }]}>Authentication Required</ThemedText>
+            <ThemedText style={[styles.emptySubtext, { color: gray[500] }]}>
+              Please log in to view and manage your items
+            </ThemedText>
+            <TouchableOpacity 
+              onPress={() => router.push('/(tabs)/settings')} 
+              style={[styles.emptyButton, { backgroundColor: colors.primary }]}
+            >
+              <ThemedText style={styles.emptyButtonText}>Go to Settings</ThemedText>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : items.length === 0 ? (
         <View style={styles.centered}>
           <View style={[styles.emptyContainer, { backgroundColor: colors.card }]}>
             <IconSymbol name="plus.circle.fill" size={64} color={gray[300]} />
-            <ThemedText style={[styles.emptyText, { color: colors.text }]}>Nessun oggetto</ThemedText>
+            <ThemedText style={[styles.emptyText, { color: colors.text }]}>{t('items.no_items')}</ThemedText>
             <ThemedText style={[styles.emptySubtext, { color: gray[500] }]}>
-              Aggiungi il tuo primo oggetto per iniziare a condividere!
+              {t('items.no_items_desc')}
             </ThemedText>
             <TouchableOpacity 
               onPress={() => router.push('/add-item')} 
               style={[styles.emptyButton, { backgroundColor: colors.primary }]}
             >
-              <ThemedText style={styles.emptyButtonText}>Aggiungi Oggetto</ThemedText>
+              <ThemedText style={styles.emptyButtonText}>{t('items.add_first_item')}</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -287,6 +379,55 @@ export default function MyItemsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+      
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        visible={showToast}
+        onHide={() => setShowToast(false)}
+      />
+      
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={cancelDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.deleteModal, { backgroundColor: colors.card }]}>
+            <View style={styles.deleteModalHeader}>
+              <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#EF4444" />
+              <ThemedText style={[styles.deleteModalTitle, { color: colors.text }]}>
+                Delete Item
+              </ThemedText>
+              <ThemedText style={[styles.deleteModalMessage, { color: gray[600] }]}>
+                Are you sure you want to delete "{itemToDelete?.title}"? This action cannot be undone.
+              </ThemedText>
+            </View>
+            
+            <View style={styles.deleteModalActions}>
+              <TouchableOpacity
+                onPress={cancelDelete}
+                style={[styles.deleteModalButton, styles.cancelButton, { backgroundColor: gray[200] }]}
+              >
+                <ThemedText style={[styles.deleteModalButtonText, { color: gray[700] }]}>
+                  Cancel
+                </ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={confirmDelete}
+                style={[styles.deleteModalButton, styles.deleteButton, { backgroundColor: '#EF4444' }]}
+              >
+                <ThemedText style={[styles.deleteModalButtonText, { color: 'white' }]}>
+                  Delete
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -379,7 +520,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   actionButton: {
-    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 4,
+    gap: 4,
+  },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
   },
   centered: {
     flex: 1,
@@ -492,5 +644,53 @@ const styles = StyleSheet.create({
   },
   toggleActive: {
     backgroundColor: '#22C55E',
+  },
+  // Delete Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  deleteModal: {
+    borderRadius: 20,
+    padding: 24,
+    maxWidth: 400,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  deleteModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  deleteModalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  deleteModalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  deleteModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

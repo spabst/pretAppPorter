@@ -184,19 +184,25 @@ export const supabaseApi = {
 
   async deleteItem(id: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      console.log('supabaseApi.deleteItem called with id:', id);
+      
+      const { data, error, count } = await supabase
         .from('items')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
+
+      console.log('Delete operation result:', { data, error, count });
 
       if (error) {
-        console.error('Error deleting item:', error);
+        console.error('Supabase error deleting item:', error.message, error.details, error.hint);
         return false;
       }
 
+      console.log('Item deleted successfully');
       return true;
     } catch (error) {
-      console.error('Error in deleteItem:', error);
+      console.error('Exception in deleteItem:', error);
       return false;
     }
   },

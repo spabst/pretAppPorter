@@ -138,5 +138,21 @@ export const en = {
   'auth.login_required': 'Authentication Required',
   'auth.login_to_access_settings': 'Please log in to access your settings',
   'auth.go_to_login': 'Go to Login',
-  'auth.contacts_optional_desc': 'You can disable contact access anytime in settings'
+  'auth.contacts_optional_desc': 'You can disable contact access anytime in settings',
+  
+  // My Items screen
+  'items.my_items': 'My Items',
+  'items.add_item': 'Add Item',
+  'items.no_items': 'No items',
+  'items.no_items_desc': 'Add your first item to start sharing!',
+  'items.add_first_item': 'Add Item',
+  'items.by_you': 'By you',
+  'items.delete_confirm': 'Delete Item',
+  'items.delete_message': 'Are you sure you want to delete',
+  'items.deleting': 'Deleting...',
+  'success.item_deleted': 'Item deleted successfully',
+  'success.item_updated': 'Item updated successfully',
+  'error.delete_failed': 'Failed to delete item',
+  'error.update_failed': 'Failed to update item',
+  'error.load_items_failed': 'Failed to load your items'
 } as const;
