@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, FlatList, TouchableOpacity, View, Modal, TextInput, ScrollView, SafeAreaView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
+import { PlaceholderImage } from '@/components/PlaceholderImage';
 import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -56,7 +57,7 @@ export default function MyItemsScreen() {
       setItems(data);
     } catch (error) {
       console.error('Error loading user items:', error);
-      setToastMessage('Failed to load your items');
+      setToastMessage(t('error.load_items_failed'));
       setToastType('error');
       setShowToast(true);
     } finally {
@@ -113,7 +114,7 @@ export default function MyItemsScreen() {
         category,
         condition,
         isAvailable,
-        images: ['https://via.placeholder.com/300x300?text=' + encodeURIComponent(title)],
+        images: [title],
         tags: []
       };
 
@@ -130,7 +131,7 @@ export default function MyItemsScreen() {
       setToastType('success');
       setShowToast(true);
     } catch {
-      setToastMessage(editingItem ? t('error.update_failed') : 'Failed to save item');
+      setToastMessage(editingItem ? t('error.update_failed') : t('error.generic'));
       setToastType('error');
       setShowToast(true);
     }
@@ -160,13 +161,13 @@ export default function MyItemsScreen() {
       
       console.log('Reloading user items...');
       loadUserItems();
-      setToastMessage('Item deleted successfully');
+      setToastMessage(t('success.item_deleted'));
       setToastType('success');
       setShowToast(true);
       console.log('Delete successful!');
     } catch (error) {
       console.error('Delete failed:', error);
-      setToastMessage('Failed to delete item');
+      setToastMessage(t('error.delete_failed'));
       setToastType('error');
       setShowToast(true);
     } finally {
@@ -181,9 +182,23 @@ export default function MyItemsScreen() {
     setItemToDelete(null);
   };
 
-  const renderItem = ({ item }: { item: Item }) => (
-    <TouchableOpacity style={[styles.itemCard, { backgroundColor: colors.card }]}>
-      <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+  const renderItem = ({ item }: { item: Item }) => {
+    const isPlaceholder = !item.images[0]?.startsWith('http');
+    
+    return (
+      <TouchableOpacity style={[styles.itemCard, { backgroundColor: colors.card }]}>
+        {isPlaceholder ? (
+          <PlaceholderImage 
+            text={item.images[0] || item.title} 
+            width={56} 
+            height={56} 
+            backgroundColor={gray[200]}
+            textColor={gray[600]}
+            fontSize={10}
+          />
+        ) : (
+          <Image source={{ uri: item.images[0] }} style={styles.itemImage} />
+        )}
       <View style={styles.itemInfo}>
         <ThemedText style={[styles.itemTitle, { color: colors.text }]}>{item.title}</ThemedText>
         <ThemedText style={[styles.itemOwner, { color: gray[500] }]}>{t('items.by_you')}</ThemedText>
@@ -201,7 +216,7 @@ export default function MyItemsScreen() {
           style={[styles.actionButton, { backgroundColor: '#3B82F6' }]}
         >
           <IconSymbol name="pencil" size={16} color="white" />
-          <ThemedText style={styles.actionButtonText}>Edit</ThemedText>
+          <ThemedText style={styles.actionButtonText}>{t('action.edit')}</ThemedText>
         </TouchableOpacity>
         <TouchableOpacity 
           onPress={() => {
@@ -219,18 +234,19 @@ export default function MyItemsScreen() {
           {isDeleting === item.id ? (
             <>
               <IconSymbol name="hourglass" size={16} color="white" />
-              <ThemedText style={styles.actionButtonText}>Deleting...</ThemedText>
+              <ThemedText style={styles.actionButtonText}>{t('items.deleting')}</ThemedText>
             </>
           ) : (
             <>
               <IconSymbol name="trash" size={16} color="white" />
-              <ThemedText style={styles.actionButtonText}>Delete</ThemedText>
+              <ThemedText style={styles.actionButtonText}>{t('items.delete_confirm')}</ThemedText>
             </>
           )}
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
-  );
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -292,38 +308,38 @@ export default function MyItemsScreen() {
         <SafeAreaView style={[styles.modalContainer, { backgroundColor: colors.background }]}>
           <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
             <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <ThemedText style={[styles.cancelButton, { color: gray[500] }]}>Annulla</ThemedText>
+              <ThemedText style={[styles.cancelButton, { color: gray[500] }]}>{t('action.cancel')}</ThemedText>
             </TouchableOpacity>
             <ThemedText style={[styles.modalTitle, { color: colors.text }]}>
-              {editingItem ? 'Modifica Oggetto' : 'Aggiungi Oggetto'}
+              {editingItem ? t('action.edit') + ' ' + t('form.title') : t('action.add_item')}
             </ThemedText>
             <TouchableOpacity onPress={handleSave}>
-              <ThemedText style={[styles.saveButton, { color: colors.primary }]}>Salva</ThemedText>
+              <ThemedText style={[styles.saveButton, { color: colors.primary }]}>{t('action.save')}</ThemedText>
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalContent}>
-            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Titolo</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.title')}</ThemedText>
             <TextInput
               style={[styles.textInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
               value={title}
               onChangeText={setTitle}
-              placeholder="Cosa stai condividendo?"
+              placeholder={t('form.title')}
               placeholderTextColor={gray[400]}
             />
 
-            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Descrizione</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.description')}</ThemedText>
             <TextInput
               style={[styles.textInput, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
               value={description}
               onChangeText={setDescription}
-              placeholder="Descrivi il tuo oggetto..."
+              placeholder={t('form.description')}
               placeholderTextColor={gray[400]}
               multiline
               numberOfLines={4}
             />
 
-            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Categoria</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.category')}</ThemedText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               {Object.values(ItemCategory).map((cat) => (
                 <TouchableOpacity
@@ -346,7 +362,7 @@ export default function MyItemsScreen() {
               ))}
             </ScrollView>
 
-            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>Condizioni</ThemedText>
+            <ThemedText style={[styles.fieldLabel, { color: colors.text }]}>{t('form.condition')}</ThemedText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
               {Object.values(ItemCondition).map((cond) => (
                 <TouchableOpacity
@@ -373,7 +389,7 @@ export default function MyItemsScreen() {
               onPress={() => setIsAvailable(!isAvailable)}
               style={styles.availabilityToggle}
             >
-              <ThemedText style={{ color: colors.text }}>Disponibile per il prestito</ThemedText>
+              <ThemedText style={{ color: colors.text }}>{t('items.available')}</ThemedText>
               <View style={[styles.toggle, isAvailable && styles.toggleActive]}>
                 {isAvailable && <IconSymbol name="checkmark" size={16} color="white" />}
               </View>
@@ -401,10 +417,10 @@ export default function MyItemsScreen() {
             <View style={styles.deleteModalHeader}>
               <IconSymbol name="exclamationmark.triangle.fill" size={48} color="#EF4444" />
               <ThemedText style={[styles.deleteModalTitle, { color: colors.text }]}>
-                Delete Item
+                {t('items.delete_confirm')}
               </ThemedText>
               <ThemedText style={[styles.deleteModalMessage, { color: gray[600] }]}>
-                Are you sure you want to delete &ldquo;{itemToDelete?.title}&rdquo;? This action cannot be undone.
+                {t('items.delete_message')} &ldquo;{itemToDelete?.title}&rdquo;?
               </ThemedText>
             </View>
             
@@ -414,7 +430,7 @@ export default function MyItemsScreen() {
                 style={[styles.deleteModalButton, { backgroundColor: gray[200] }]}
               >
                 <ThemedText style={[styles.deleteModalButtonText, { color: gray[700] }]}>
-                  Cancel
+                  {t('action.cancel')}
                 </ThemedText>
               </TouchableOpacity>
               
@@ -423,7 +439,7 @@ export default function MyItemsScreen() {
                 style={[styles.deleteModalButton, { backgroundColor: '#EF4444' }]}
               >
                 <ThemedText style={[styles.deleteModalButtonText, { color: 'white' }]}>
-                  Delete
+                  {t('items.delete_confirm')}
                 </ThemedText>
               </TouchableOpacity>
             </View>

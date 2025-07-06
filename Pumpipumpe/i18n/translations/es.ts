@@ -93,5 +93,21 @@ export const es = {
   'settings.delete_account': 'Eliminar Cuenta',
   'settings.help': 'Ayuda y Soporte',
   'settings.privacy_policy': 'Política de Privacidad',
-  'settings.terms': 'Términos de Servicio'
+  'settings.terms': 'Términos de Servicio',
+  
+  // My Items screen
+  'items.my_items': 'Mis Objetos',
+  'items.add_item': 'Añadir Objeto',
+  'items.no_items': 'Sin objetos',
+  'items.no_items_desc': '¡Añade tu primer objeto para empezar a compartir!',
+  'items.add_first_item': 'Añadir Objeto',
+  'items.by_you': 'Por ti',
+  'items.delete_confirm': 'Eliminar Objeto',
+  'items.delete_message': '¿Estás seguro de que quieres eliminar',
+  'items.deleting': 'Eliminando...',
+  'success.item_deleted': 'Objeto eliminado exitosamente',
+  'success.item_updated': 'Objeto actualizado exitosamente',
+  'error.delete_failed': 'No se pudo eliminar el objeto',
+  'error.update_failed': 'No se pudo actualizar el objeto',
+  'error.load_items_failed': 'No se pudieron cargar tus objetos'
 } as const;

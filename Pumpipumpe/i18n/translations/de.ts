@@ -93,5 +93,21 @@ export const de = {
   'settings.delete_account': 'Konto löschen',
   'settings.help': 'Hilfe & Support',
   'settings.privacy_policy': 'Datenschutzrichtlinie',
-  'settings.terms': 'Nutzungsbedingungen'
+  'settings.terms': 'Nutzungsbedingungen',
+  
+  // My Items screen
+  'items.my_items': 'Meine Gegenstände',
+  'items.add_item': 'Gegenstand hinzufügen',
+  'items.no_items': 'Keine Gegenstände',
+  'items.no_items_desc': 'Fügen Sie Ihren ersten Gegenstand hinzu, um mit dem Teilen zu beginnen!',
+  'items.add_first_item': 'Gegenstand hinzufügen',
+  'items.by_you': 'Von Ihnen',
+  'items.delete_confirm': 'Gegenstand löschen',
+  'items.delete_message': 'Sind Sie sicher, dass Sie löschen möchten',
+  'items.deleting': 'Wird gelöscht...',
+  'success.item_deleted': 'Gegenstand erfolgreich gelöscht',
+  'success.item_updated': 'Gegenstand erfolgreich aktualisiert',
+  'error.delete_failed': 'Gegenstand konnte nicht gelöscht werden',
+  'error.update_failed': 'Gegenstand konnte nicht aktualisiert werden',
+  'error.load_items_failed': 'Ihre Gegenstände konnten nicht geladen werden'
 } as const;
